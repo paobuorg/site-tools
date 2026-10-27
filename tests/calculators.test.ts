@@ -15,7 +15,12 @@ import {
   type SplitStrategy,
 } from '../src/lib/calculators';
 
-const casesDir = path.resolve(import.meta.dirname, '../../running-tools/data/cases');
+const toolsRoot = process.env.TOOLS_CONTENT_DIR
+  ? path.resolve(process.env.TOOLS_CONTENT_DIR)
+  : process.env.PAOBU_REPOS_DIR
+    ? path.join(process.env.PAOBU_REPOS_DIR, 'running-tools')
+    : path.resolve(import.meta.dirname, '../../running-tools');
+const casesDir = path.join(toolsRoot, 'data/cases');
 
 function readCase<T>(caseId: string): T {
   return JSON.parse(fs.readFileSync(path.join(casesDir, `${caseId}.json`), 'utf8')) as T;

@@ -8,6 +8,12 @@ import { serializeTrack, trackOutputFileName } from '../src/lib/serialize-track'
 import { simplifyTrack, TrackSimplifyError } from '../src/lib/simplify-track';
 import { compareRoutes } from '../src/lib/route-compare';
 
+const toolsRoot = process.env.TOOLS_CONTENT_DIR
+  ? path.resolve(process.env.TOOLS_CONTENT_DIR)
+  : process.env.PAOBU_REPOS_DIR
+    ? path.join(process.env.PAOBU_REPOS_DIR, 'running-tools')
+    : path.resolve(import.meta.dirname, '../../running-tools');
+
 const track: Coordinate[][] = [
   [
     { lon: 0, lat: 0, elevation: 10 },
@@ -179,7 +185,7 @@ test('simplification refuses unsupported tolerance, latitude, dateline and span'
 });
 
 test('published track conversion and simplification cases match', () => {
-  const casesDir = path.resolve(import.meta.dirname, '../../running-tools/data/cases');
+  const casesDir = path.join(toolsRoot, 'data/cases');
   const convertCase = JSON.parse(
     fs.readFileSync(path.join(casesDir, 'case-track-convert-elevation.json'), 'utf8'),
   ) as {
@@ -221,7 +227,7 @@ test('published track conversion and simplification cases match', () => {
 });
 
 test('route comparison keeps missing values unknown and produces no ranking', () => {
-  const casesDir = path.resolve(import.meta.dirname, '../../running-tools/data/cases');
+  const casesDir = path.join(toolsRoot, 'data/cases');
   const item = JSON.parse(
     fs.readFileSync(path.join(casesDir, 'case-route-compare-missing.json'), 'utf8'),
   ) as {

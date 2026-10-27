@@ -1,0 +1,13 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "types": ["astro/client", "node"],
+    "paths": {
+      "@paobu/core": ["./node_modules/@paobu/core/src/index.ts"],
+      "@paobu/core/*": ["./node_modules/@paobu/core/src/*"]
+    }
+  },
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "node_modules"]
+}

@@ -1,0 +1,2001 @@
+---
+import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Icon from '@paobu/core/components/Icon.astro';
+import type { RouteDetails } from '@paobu/core/content';
+import { otherLocale, type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { breadcrumbList } from '@paobu/core/lib/seo';
+import { MAX_FILE_BYTES } from '../../../lib/parse-track';
+import { siteContent } from '../../../lib/content';
+import {
+  entityHref,
+  formatDate,
+  toolDetails,
+  toolHref,
+  toolIcon,
+} from '../../../lib/view';
+
+export function getStaticPaths() {
+  const content = siteContent();
+  return LOCALES.flatMap((locale) =>
+    content.visible('tool').map((entity) => ({
+      params: { locale, slug: entity.slug },
+      props: { entityId: entity.entityId },
+    })),
+  );
+}
+
+const locale = Astro.params.locale as Locale;
+const content = siteContent();
+const entity = content.byId(Astro.props.entityId);
+if (!entity) throw new Error(`Tool ${Astro.props.entityId} is not visible`);
+const translation = content.translation(entity, locale);
+const details = toolDetails(entity);
+const sources = content.sourcesFor(entity);
+const related = content.related(entity, locale);
+const cases = content.cases.filter((item) => item.toolId === entity.entityId);
+const reviews = content.reviews.filter(
+  (review) => review.entityId === entity.entityId && review.locale === locale,
+);
+const authors = [
+  ...new Set(
+    entity.translations
+      .flatMap((item) => item.authors)
+      .map((id) => content.contributors.find((person) => person.contributorId === id)?.displayName ?? id),
+  ),
+];
+const other = otherLocale(locale);
+const activeTool = [
+  'pace',
+  'splits',
+  'run-walk',
+  'race-predict',
+  'track-view',
+  'track-convert',
+  'track-simplify',
+  'route-compare',
+].includes(entity.slug);
+const publishedRoutes = content.allEntities
+  .filter((item) => item.kind === 'route' && item.status === 'published')
+  .map((item) => {
+    const route = item.details as RouteDetails;
+    return {
+      id: item.entityId,
+      label: content.translation(item, locale).title,
+      version: route.courseVersion,
+      raceType: route.raceType,
+      distanceMeters: route.distanceMeters,
+      distanceMethod: route.distanceMethod,
+      elevationGainMeters: route.elevationGainMeters,
+      elevationMethod: route.elevationMethod,
+      surface: route.surface ?? null,
+      technicality: route.technicality ?? null,
+      geometryAccess: route.geometryAccess,
+      geometryUrl: route.officialGeometryUrl,
+    };
+  });
+const copy = locale === 'zh-CN'
+  ? {
+      home: '首页',
+      tools: '全部工具',
+      preview: '编辑审阅中',
+      previewNote: '这个工具仍在编辑审阅中，公式、文案和边界可能调整。',
+      privacy: '本地计算',
+      localOnly: '输入只在当前浏览器处理，不上传，不需要账户。',
+      input: '输入',
+      distance: '距离',
+      totalDistance: '总距离',
+      splitDistance: '分段距离',
+      duration: '总时间',
+      durationHint: '格式 hh:mm:ss 或 mm:ss，例如 00:50:00。',
+      pace: '配速',
+      paceHint: '按所选单位输入每公里或每英里的时间，例如 05:00。',
+      unit: '单位',
+      km: '公里',
+      mi: '英里',
+      calculate: '计算',
+      paceFormTitle: '选择已知的两项',
+      paceMode: '计算模式',
+      modeDistanceTime: '距离 + 时间',
+      modeDistancePace: '距离 + 配速',
+      modeTimePace: '时间 + 配速',
+      paceResultTitle: '计算结果',
+      averagePace: '平均配速',
+      paceMile: '每英里配速',
+      averageSpeed: '平均速度',
+      speedUnit: '公里/小时',
+      totalTime: '总时间',
+      paceNote: '配速是全程平均值，不描述起跑拥堵、补给停留、坡度或天气造成的分段变化。',
+      makeSplits: '按这个结果生成分段表',
+      splitsFormTitle: '设置距离、时间、分段与策略',
+      splitsResultTitle: '分段配速表',
+      splitsSummary: '{count} 段，每段 {distance} · {strategy}',
+      strategyEven: '匀速',
+      strategyNegative: '负分段',
+      splitStrategy: '分段策略',
+      delta: '负分段差值',
+      deltaHint: '默认 0.02，范围 0–0.10。0.02 表示前半程用 51% 的总时间、后半程用 49%。',
+      tableIndex: '段',
+      tableDistance: '分段距离',
+      tableCumulative: '累计时间',
+      tableSplit: '本段时间',
+      print: '打印分段表',
+      splitNote: '最后一段可能不足一个完整分段。整数秒按最大余数法分配，所有段时间相加严格等于总时间，且不出现负分段。',
+      runWalkFormTitle: '设置跑步、步行与轮次',
+      runWalkMode: '规划模式',
+      rwModeCycles: '按循环数',
+      rwModeDuration: '按总时长',
+      runDuration: '每轮跑步时长',
+      walkDuration: '每轮步行时长',
+      runDurationHint: '格式 mm:ss 或 hh:mm:ss，例如 02:00。',
+      walkDurationHint: '可以为 00:00，表示只排跑步段。',
+      cyclesLabel: '循环数',
+      cyclesHint: '1 到 1000 之间的整数。',
+      totalDuration: '计划总时长',
+      totalDurationHint: '格式 hh:mm:ss 或 mm:ss，最长 7 天。',
+      runWalkResultTitle: '跑走分段计划',
+      rwRequested: '请求时长',
+      rwScheduled: '计划总时长',
+      rwFullCycles: '完整轮数',
+      rwRunTotal: '跑步合计',
+      rwWalkTotal: '步行合计',
+      rwTableCycle: '轮次',
+      rwTableKind: '类型',
+      rwTableDuration: '时长',
+      rwTableStatus: '状态',
+      rwRun: '跑步',
+      rwWalk: '步行',
+      rwPartial: '不完整',
+      rwFull: '完整',
+      rwTruncated: '最后一段在总时长处被截断。',
+      rwComplete: '所有分段均完整。',
+      rwNote: '这里只排时间，不推算距离、配速、热量或训练效果。',
+      raceFormTitle: '输入已知成绩与目标距离',
+      knownDistance: '已知比赛距离',
+      knownTime: '已知完赛时间',
+      targetDistance: '目标距离',
+      raceDistanceHint: '距离需在 5 公里至 42.195 公里之间，仅适用于公路比赛。',
+      raceTimeHint: '格式 hh:mm:ss 或 mm:ss，例如 00:50:00。',
+      raceResultTitle: '估算结果',
+      racePredictedTime: '估算完赛时间',
+      raceRatio: '距离比',
+      racePaceNote: 'Riegel 经验估算，假设训练水平与比赛条件可比；不是成绩保证，也不适用于越野或超马。',
+      convertFormTitle: '选择本地轨迹并设置输出格式',
+      convertFormat: '输出格式',
+      convertFormatHint: '默认选择与输入相反的格式。只导出线路、坐标与可用高程，不导出时间、设备、姓名或原始 metadata。',
+      convertStart: '读取并转换',
+      convertResultTitle: '转换结果',
+      convertSourceFormat: '输入格式',
+      convertOutputFormat: '输出格式',
+      convertOutputBytes: '输出大小',
+      convertDownload: '下载转换文件',
+      convertNote: '输出是重新序列化的线路文件，不保证与原始文件字节一致；原始文件保留在你的设备上。',
+      convertPrivacy: '文件只在当前页面内读取，不上传，也不会在刷新后保留。',
+      simplifyFormTitle: '选择本地轨迹与简化容差',
+      simplifyTolerance: '投影容差（米）',
+      simplifyToleranceHint: '1 到 100 米，默认 10 米。容差按本地等距投影平面计算，不是测地距离。',
+      simplifyStart: '读取并简化',
+      simplifyResultTitle: '简化结果',
+      simplifyOriginalPoints: '原始点数',
+      simplifySimplifiedPoints: '简化后点数',
+      simplifyRetained: '保留点数比例',
+      simplifyDistanceBefore: '原始测地距离',
+      simplifyDistanceAfter: '简化后测地距离',
+      simplifyDistanceDelta: '距离变化',
+      simplifyToleranceUsed: '使用容差',
+      simplifyDownload: '下载简化文件',
+      simplifyNote: '简化版按投影容差生成，输出格式与输入相同；原始文件不会被修改或覆盖。',
+      simplifyTableSegment: '段',
+      simplifyTableOriginal: '原点数',
+      simplifyTableSimplified: '简化后',
+      simplifyTableBefore: '原距离',
+      simplifyTableAfter: '简化距离',
+      simplifyLimitNote: '单段超过 500 公里、跨日界线或纬度超过 85 度时，首版拒绝简化。这类文件仍可用轨迹查看或转换工具处理。',
+      routeCompareFormTitle: '选择已发布赛道版本（2 至 4 个）',
+      routeCompareEmpty: '目前没有足够的已发布赛道版本可供比较。',
+      routeCompareEmptyHint: '赛道完成审阅并发布后，这里会显示可勾选的固定版本。编辑审阅中的内容不会参与比较。',
+      routeCompareSelectHint: '至少选择 2 个、最多 4 个版本；缺失字段显示为未知，不生成排名。',
+      routeCompareButton: '比较所选赛道',
+      routeCompareResultTitle: '赛道字段对照',
+      routeCompareNote: '表格只对照已记录字段，不做安全、难度或适合性排名。不同来源的距离与高程口径可能不同。',
+      routeTableField: '字段',
+      routeDistance: '距离',
+      routeElevation: '高程爬升',
+      routeSurface: '路面',
+      routeTechnicality: '技术性',
+      routeUnknown: '未知',
+      routeVersion: '版本',
+      routeOfficialGeometry: '官方轨迹',
+      routeTypeRoad: '公路马拉松',
+      routeTypeTrail: '越野超马',
+      routeGeometryRedistributable: '可再分发',
+      routeGeometryOfficial: '官方链接',
+      routeGeometryUnavailable: '无公开几何',
+      trackFormTitle: '选择本地轨迹文件',
+      trackFile: 'GPX 或 GeoJSON 文件',
+      trackFileHint: `仅支持 GPX / GeoJSON；最大 ${Math.round(MAX_FILE_BYTES / 1_000_000)} MB、${new Intl.NumberFormat('zh-CN').format(200000)} 个坐标点。文件不会上传。`,
+      trackStart: '读取并计算',
+      trackCancel: '取消',
+      trackResultTitle: '轨迹统计',
+      trackDistance: '测地距离',
+      trackPoints: '坐标点数',
+      trackSegments: '线段数',
+      trackElevation: '累计爬升',
+      trackStartPoint: '起点（纬度, 经度）',
+      trackEndPoint: '终点（纬度, 经度）',
+      trackWarnings: '提示',
+      trackFileLabel: '文件',
+      trackPrivacy: '文件只在当前页面内读取，刷新后不会保留。请避免在公共设备上打开含家庭住址等敏感位置的文件。',
+      formulaTitle: '公式与适用条件',
+      assumptions: '适用条件',
+      rounding: '舍入规则',
+      specTitle: '实现规范（英文原文）',
+      specHint: '以下字段用于实现与审阅核对，正文提供中文解释。',
+      examplesTitle: '独立算例',
+      examplesHint: '期望值由独立算术或已核验算法得出，不由页面脚本生成。',
+      inputLabel: '输入',
+      expectedLabel: '期望',
+      basisLabel: '依据',
+      sourcesTitle: '来源与证据',
+      accessed: '查阅',
+      relatedTitle: '相关内容',
+      relatedKnowledge: '关联知识',
+      relatedRoutes: '关联赛道',
+      relatedTools: '关联工具',
+      versionTitle: '版本与审阅',
+      authors: '撰写',
+      noReview: '尚无审阅记录',
+      reviewed: '审阅于',
+      updated: '更新于',
+      unreviewed: '尚未审阅',
+      back: '返回全部工具',
+      notBuilt: '这个工具的计算界面尚未完成，本页只公开规范与算例。',
+    }
+  : {
+      home: 'Home',
+      tools: 'All tools',
+      preview: 'In editorial review',
+      previewNote: 'This tool is still in editorial review; its formula, wording and limits may change.',
+      privacy: 'Local calculation',
+      localOnly: 'Inputs are processed in this browser only. Nothing is uploaded and no account is needed.',
+      input: 'Input',
+      distance: 'Distance',
+      totalDistance: 'Total distance',
+      splitDistance: 'Split distance',
+      duration: 'Total time',
+      durationHint: 'Format hh:mm:ss or mm:ss, for example 00:50:00.',
+      pace: 'Pace',
+      paceHint: 'Enter the time per kilometre or mile in the selected unit, for example 05:00.',
+      unit: 'Unit',
+      km: 'Kilometres',
+      mi: 'Miles',
+      calculate: 'Calculate',
+      paceFormTitle: 'Choose the two known values',
+      paceMode: 'Calculation mode',
+      modeDistanceTime: 'Distance + time',
+      modeDistancePace: 'Distance + pace',
+      modeTimePace: 'Time + pace',
+      paceResultTitle: 'Result',
+      averagePace: 'Average pace',
+      paceMile: 'Pace per mile',
+      averageSpeed: 'Average speed',
+      speedUnit: 'km/h',
+      totalTime: 'Total time',
+      paceNote: 'Pace is an average over the whole run. It does not describe crowding at the start, aid-station stops, hills or weather.',
+      makeSplits: 'Build splits from this result',
+      splitsFormTitle: 'Set distance, time, split length and strategy',
+      splitsResultTitle: 'Split table',
+      splitsSummary: '{count} splits of {distance} · {strategy}',
+      strategyEven: 'Even',
+      strategyNegative: 'Negative split',
+      splitStrategy: 'Split strategy',
+      delta: 'Negative-split difference',
+      deltaHint: 'Default 0.02, range 0–0.10. At 0.02 the first half uses 51% of total time and the second half uses 49%.',
+      tableIndex: 'Split',
+      tableDistance: 'Distance',
+      tableCumulative: 'Cumulative time',
+      tableSplit: 'Split time',
+      print: 'Print split table',
+      splitNote: 'The final split may be shorter than a full unit. Whole seconds are assigned by largest remainder, so every split time adds up to the entered total and no split is negative.',
+      runWalkFormTitle: 'Set run, walk and number of rounds',
+      runWalkMode: 'Planning mode',
+      rwModeCycles: 'By cycles',
+      rwModeDuration: 'By total time',
+      runDuration: 'Run duration per cycle',
+      walkDuration: 'Walk duration per cycle',
+      runDurationHint: 'Format mm:ss or hh:mm:ss, for example 02:00.',
+      walkDurationHint: 'May be 00:00, which leaves only run segments.',
+      cyclesLabel: 'Number of cycles',
+      cyclesHint: 'A whole number from 1 to 1000.',
+      totalDuration: 'Total plan time',
+      totalDurationHint: 'Format hh:mm:ss or mm:ss, up to 7 days.',
+      runWalkResultTitle: 'Run-walk schedule',
+      rwRequested: 'Requested time',
+      rwScheduled: 'Scheduled time',
+      rwFullCycles: 'Full cycles',
+      rwRunTotal: 'Running total',
+      rwWalkTotal: 'Walking total',
+      rwTableCycle: 'Cycle',
+      rwTableKind: 'Type',
+      rwTableDuration: 'Duration',
+      rwTableStatus: 'Status',
+      rwRun: 'Run',
+      rwWalk: 'Walk',
+      rwPartial: 'Partial',
+      rwFull: 'Complete',
+      rwTruncated: 'The final segment is cut at the requested total.',
+      rwComplete: 'Every segment is complete.',
+      rwNote: 'This plans time only. It does not estimate distance, pace, calories or training effect.',
+      raceFormTitle: 'Enter a known result and a target distance',
+      knownDistance: 'Known race distance',
+      knownTime: 'Known finish time',
+      targetDistance: 'Target distance',
+      raceDistanceHint: 'Distances must be between 5 km and 42.195 km. Road races only.',
+      raceTimeHint: 'Format hh:mm:ss or mm:ss, for example 00:50:00.',
+      raceResultTitle: 'Estimate',
+      racePredictedTime: 'Predicted finish time',
+      raceRatio: 'Distance ratio',
+      racePaceNote: 'A Riegel estimate that assumes comparable training and race conditions. It is not a guarantee and does not apply to trail or ultramarathon races.',
+      convertFormTitle: 'Choose a local track and an output format',
+      convertFormat: 'Output format',
+      convertFormatHint: 'The opposite of the input format is selected by default. Only line geometry, coordinates and available elevation are exported; times, devices, names and original metadata are not.',
+      convertStart: 'Read and convert',
+      convertResultTitle: 'Conversion result',
+      convertSourceFormat: 'Input format',
+      convertOutputFormat: 'Output format',
+      convertOutputBytes: 'Output size',
+      convertDownload: 'Download converted file',
+      convertNote: 'The output is a re-serialised line file and is not guaranteed to be byte-identical to the original. The original file stays on your device.',
+      convertPrivacy: 'The file is read in this page only, is not uploaded and is not retained after a refresh.',
+      simplifyFormTitle: 'Choose a local track and a simplification tolerance',
+      simplifyTolerance: 'Projected tolerance (metres)',
+      simplifyToleranceHint: '1 to 100 metres, default 10. Tolerance is measured in a local equidistant projection, not as a geodesic distance.',
+      simplifyStart: 'Read and simplify',
+      simplifyResultTitle: 'Simplification result',
+      simplifyOriginalPoints: 'Original points',
+      simplifySimplifiedPoints: 'Simplified points',
+      simplifyRetained: 'Points retained',
+      simplifyDistanceBefore: 'Original geodesic distance',
+      simplifyDistanceAfter: 'Simplified geodesic distance',
+      simplifyDistanceDelta: 'Distance change',
+      simplifyToleranceUsed: 'Tolerance used',
+      simplifyDownload: 'Download simplified file',
+      simplifyNote: 'The simplified version is generated at the projected tolerance and keeps the input format. The original file is not modified or overwritten.',
+      simplifyTableSegment: 'Segment',
+      simplifyTableOriginal: 'Original',
+      simplifyTableSimplified: 'Simplified',
+      simplifyTableBefore: 'Before',
+      simplifyTableAfter: 'After',
+      simplifyLimitNote: 'This version refuses to simplify a segment that spans more than 500 km, crosses the antimeridian or reaches beyond 85 degrees latitude. You can still use the track viewer or converter on those files.',
+      routeCompareFormTitle: 'Choose published route versions (2 to 4)',
+      routeCompareEmpty: 'There are not enough published route versions to compare yet.',
+      routeCompareEmptyHint: 'Once routes complete review and are published, their fixed versions will appear here. Content still in review does not take part in comparisons.',
+      routeCompareSelectHint: 'Choose at least 2 and at most 4 versions. Missing fields are shown as unknown and no ranking is generated.',
+      routeCompareButton: 'Compare selected routes',
+      routeCompareResultTitle: 'Route field comparison',
+      routeCompareNote: 'The table compares recorded fields only and does not rank safety, difficulty or suitability. Distance and elevation bases can differ between sources.',
+      routeTableField: 'Field',
+      routeDistance: 'Distance',
+      routeElevation: 'Elevation gain',
+      routeSurface: 'Surface',
+      routeTechnicality: 'Technicality',
+      routeUnknown: 'Unknown',
+      routeVersion: 'Version',
+      routeOfficialGeometry: 'Official track',
+      routeTypeRoad: 'Road marathon',
+      routeTypeTrail: 'Trail ultramarathon',
+      routeGeometryRedistributable: 'Redistributable',
+      routeGeometryOfficial: 'Official link',
+      routeGeometryUnavailable: 'No public geometry',
+      trackFormTitle: 'Choose a local track file',
+      trackFile: 'GPX or GeoJSON file',
+      trackFileHint: `GPX or GeoJSON only; up to ${Math.round(MAX_FILE_BYTES / 1_000_000)} MB and ${new Intl.NumberFormat('en-US').format(200000)} points. The file is not uploaded.`,
+      trackStart: 'Read and calculate',
+      trackCancel: 'Cancel',
+      trackResultTitle: 'Track summary',
+      trackDistance: 'Geodesic distance',
+      trackPoints: 'Points',
+      trackSegments: 'Segments',
+      trackElevation: 'Elevation gain',
+      trackStartPoint: 'Start (latitude, longitude)',
+      trackEndPoint: 'End (latitude, longitude)',
+      trackWarnings: 'Warnings',
+      trackFileLabel: 'File',
+      trackPrivacy: 'The file is read in this page only and is not retained after a refresh. Avoid opening files that reveal a home address on a shared device.',
+      formulaTitle: 'Formula and conditions',
+      assumptions: 'Assumptions',
+      rounding: 'Rounding',
+      specTitle: 'Implementation specification (English)',
+      specHint: 'These fields support implementation and review. The article text explains them in the page language.',
+      examplesTitle: 'Independent examples',
+      examplesHint: 'Expected values come from independent arithmetic or verified algorithms, not from the page script.',
+      inputLabel: 'Input',
+      expectedLabel: 'Expected',
+      basisLabel: 'Basis',
+      sourcesTitle: 'Sources and evidence',
+      accessed: 'Accessed',
+      relatedTitle: 'Related',
+      relatedKnowledge: 'Related knowledge',
+      relatedRoutes: 'Related routes',
+      relatedTools: 'Related tools',
+      versionTitle: 'Version and review',
+      authors: 'Written by',
+      noReview: 'No review record yet',
+      reviewed: 'Reviewed',
+      updated: 'Updated',
+      unreviewed: 'Not yet reviewed',
+      back: 'Back to all tools',
+      notBuilt: 'The calculator interface for this tool is not built yet; only its specification and examples are published.',
+    };
+const relatedKnowledge = related.filter((item) => item.kind === 'knowledge');
+const relatedRoutes = related.filter((item) => item.kind === 'route');
+const relatedTools = related.filter((item) => item.kind === 'tool');
+const clientStrings = {
+  distanceError: locale === 'zh-CN' ? '请输入大于零的距离。' : 'Enter a distance greater than zero.',
+  durationError: locale === 'zh-CN' ? '请输入 hh:mm:ss 或 mm:ss 格式的时间。' : 'Enter a time as hh:mm:ss or mm:ss.',
+  paceError: locale === 'zh-CN' ? '请输入大于零的配速，例如 05:00。' : 'Enter a pace greater than zero, for example 05:00.',
+  splitError: locale === 'zh-CN' ? '请输入大于零的分段距离。' : 'Enter a split distance greater than zero.',
+  deltaError: locale === 'zh-CN' ? '负分段差值必须在 0 到 0.10 之间。' : 'The negative-split difference must be between 0 and 0.10.',
+  tooManySplits: locale === 'zh-CN' ? '分段数量过多，请增大分段距离。' : 'Too many splits; increase the split distance.',
+  splitSummary: locale === 'zh-CN' ? '{count} 段，每段 {distance} · {strategy}' : '{count} splits of {distance} · {strategy}',
+  strategyEven: locale === 'zh-CN' ? '匀速' : 'Even',
+  strategyNegative: locale === 'zh-CN' ? '负分段' : 'Negative split',
+  runError: locale === 'zh-CN' ? '请输入大于零的整数秒跑步时长，例如 02:00。' : 'Enter a run duration greater than zero as mm:ss or hh:mm:ss.',
+  walkError: locale === 'zh-CN' ? '步行时长可以是 00:00，或更大的整数秒。' : 'Walk time may be 00:00 or a larger whole number of seconds.',
+  cyclesError: locale === 'zh-CN' ? '循环数必须是 1 到 1000 之间的整数。' : 'Cycles must be a whole number from 1 to 1000.',
+  totalError: locale === 'zh-CN' ? '总时长必须是大于零的整数秒，且不超过 7 天。' : 'Total time must be a whole number of seconds up to 7 days.',
+  tooManySegments: locale === 'zh-CN' ? '分段数量过多，请调整跑步、步行时长或总时长。' : 'Too many segments; adjust the run, walk or total time.',
+  rwTruncated: locale === 'zh-CN' ? '最后一段在总时长处被截断。' : 'The final segment is cut at the requested total.',
+  rwComplete: locale === 'zh-CN' ? '所有分段均完整。' : 'Every segment is complete.',
+  rwRun: locale === 'zh-CN' ? '跑步' : 'Run',
+  rwWalk: locale === 'zh-CN' ? '步行' : 'Walk',
+  rwFull: locale === 'zh-CN' ? '完整' : 'Complete',
+  rwPartial: locale === 'zh-CN' ? '不完整' : 'Partial',
+  raceDistanceError: locale === 'zh-CN' ? '距离需在 5 至 42.195 公里之间（或等值英里）。' : 'Distance must be between 5 km and 42.195 km (or the equivalent in miles).',
+  raceTimeError: locale === 'zh-CN' ? '请输入大于零的完赛时间，例如 00:50:00。' : 'Enter a finish time greater than zero, for example 00:50:00.',
+  simplifyToleranceError: locale === 'zh-CN' ? '简化容差必须在 1 到 100 米之间。' : 'Simplification tolerance must be between 1 and 100 metres.',
+  simplifyLatitudeError: locale === 'zh-CN' ? '第 {segment} 段包含纬度超过 85 度的点，首版拒绝简化。' : 'Segment {segment} contains a point beyond 85 degrees latitude; this version cannot simplify it.',
+  simplifyDatelineError: locale === 'zh-CN' ? '第 {segment} 段跨越日界线，首版拒绝简化。' : 'Segment {segment} crosses the antimeridian; this version cannot simplify it.',
+  simplifyRangeError: locale === 'zh-CN' ? '第 {segment} 段范围超过 500 公里，首版拒绝简化。' : 'Segment {segment} spans more than 500 km; this version cannot simplify it.',
+  slowHint: locale === 'zh-CN' ? '文件仍在本地处理。你可以取消后尝试更小的文件。' : 'The file is still being processed locally. You can cancel and try a smaller file.',
+  routeField: locale === 'zh-CN' ? '字段' : 'Field',
+  routeDistance: locale === 'zh-CN' ? '距离' : 'Distance',
+  routeElevation: locale === 'zh-CN' ? '高程爬升' : 'Elevation gain',
+  routeSurface: locale === 'zh-CN' ? '路面' : 'Surface',
+  routeTechnicality: locale === 'zh-CN' ? '技术性' : 'Technicality',
+  routeUnknown: locale === 'zh-CN' ? '未知' : 'Unknown',
+  routeVersion: locale === 'zh-CN' ? '版本' : 'Version',
+  routeOfficialGeometry: locale === 'zh-CN' ? '官方轨迹' : 'Official track',
+  routeTypeRoad: locale === 'zh-CN' ? '公路马拉松' : 'Road marathon',
+  routeTypeTrail: locale === 'zh-CN' ? '越野超马' : 'Trail ultramarathon',
+  routeGeometryRedistributable: locale === 'zh-CN' ? '可再分发' : 'Redistributable',
+  routeGeometryOfficial: locale === 'zh-CN' ? '官方链接' : 'Official link',
+  routeGeometryUnavailable: locale === 'zh-CN' ? '无公开几何' : 'No public geometry',
+  routeErrorCount: locale === 'zh-CN' ? '请选择 2 至 4 个已发布赛道版本。' : 'Choose 2 to 4 published route versions.',
+  ready: locale === 'zh-CN' ? '请选择文件。' : 'Choose a file.',
+  processing: locale === 'zh-CN' ? '正在本地读取文件…' : 'Reading the file locally…',
+  done: locale === 'zh-CN' ? '完成。' : 'Done.',
+  cancelled: locale === 'zh-CN' ? '已取消。' : 'Cancelled.',
+  timeout: locale === 'zh-CN' ? '处理超时，请尝试更小的文件。' : 'Processing took too long. Try a smaller file.',
+  tooLarge: locale === 'zh-CN' ? `文件超过 ${Math.round(MAX_FILE_BYTES / 1_000_000)} MB，已拒绝。` : `The file exceeds ${Math.round(MAX_FILE_BYTES / 1_000_000)} MB and was rejected.`,
+  unsafeXml: locale === 'zh-CN' ? '文件包含 DTD 或实体声明，出于安全原因已拒绝。' : 'The file contains a DTD or entity declaration and was rejected for safety.',
+  invalidXml: locale === 'zh-CN' ? 'GPX 文件不是格式正确的 XML。' : 'The GPX file is not well-formed XML.',
+  unsupported: locale === 'zh-CN' ? '只支持 GPX 与 GeoJSON 文件。' : 'Only GPX and GeoJSON files are supported.',
+  invalidJson: locale === 'zh-CN' ? 'GeoJSON 文件不是有效 JSON。' : 'The GeoJSON file is not valid JSON.',
+  noPoints: locale === 'zh-CN' ? '文件没有可读取的轨迹点。' : 'No track points were found.',
+  invalidCoordinate: locale === 'zh-CN' ? '文件包含无效的经纬度。' : 'The file contains an invalid coordinate.',
+  tooManyPoints: locale === 'zh-CN' ? '坐标点超过上限。' : 'The file contains too many points.',
+  emptyGeometry: locale === 'zh-CN' ? '文件没有可用的线几何。' : 'The file contains no usable line geometry.',
+  unknownError: locale === 'zh-CN' ? '无法读取这个文件。' : 'The file could not be read.',
+  failed: locale === 'zh-CN' ? '处理失败，请检查文件。' : 'Processing failed. Check the file.',
+  unknown: locale === 'zh-CN' ? '未知' : 'Unknown',
+  elevationMissing: locale === 'zh-CN' ? '文件没有高程数据；累计爬升显示为未知。' : 'The file has no elevation values; gain is unknown.',
+  elevationPartial: locale === 'zh-CN' ? '部分点缺少高程；为避免低估，累计爬升显示为未知。' : 'Some points lack elevation; gain is unknown to avoid undercounting.',
+  suspiciousJumps: locale === 'zh-CN' ? '发现 {count} 处相邻点距离超过 10 公里，可能是断点或异常坐标。' : 'Found {count} point-to-point gaps over 10 km, likely breaks or bad coordinates.',
+  multipleSegments: locale === 'zh-CN' ? '文件包含 {count} 个线段；距离分别累计，不把线段端点人为连接。' : 'The file contains {count} segments; distances are summed without joining their endpoints.',
+};
+const title = `${translation.title} · RunMap`;
+const pageOrigin = Astro.site ?? Astro.url.origin;
+const pageUrl = new URL(`/${locale}/tools/${entity.slug}/`, pageOrigin).toString();
+const structuredData = [
+  breadcrumbList([
+    { name: copy.home, url: new URL(`/${locale}/`, pageOrigin).toString() },
+    { name: copy.tools, url: new URL(`/${locale}/`, pageOrigin).toString() },
+    { name: translation.title, url: pageUrl },
+  ]),
+];
+---
+
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={translation.summary}
+  active="tools"
+  preview={content.preview}
+  ogType="article"
+  alternateHref={`/${other}/tools/${entity.slug}/`}
+  structuredData={structuredData}
+>
+  <div class="page-shell">
+    <div class="breadcrumbs">
+      <ol>
+        <li><a href={`/${locale}/`}>{copy.home}</a></li>
+        <li><a href={`/${locale}/`}>{copy.tools}</a></li>
+        <li>{translation.title}</li>
+      </ol>
+    </div>
+
+    <header class="tool-header">
+      <span class="tool-header-icon" aria-hidden="true"><Icon name={toolIcon(entity.slug)} size={30} /></span>
+      <div class="tool-header-copy">
+        <div class="tool-tags">
+          <span class="pill">{details.specVersion}</span>
+          <span class="pill mint"><Icon name="shield" size={13} />{copy.privacy}</span>
+          {entity.status !== 'published' && <span class="pill coral">{copy.preview}</span>}
+        </div>
+        <h1>{translation.title}</h1>
+        <p>{translation.summary}</p>
+      </div>
+    </header>
+
+    {entity.status !== 'published' && (
+      <div class="notice tone-yellow">
+        <Icon name="alert" size={18} />
+        <div>
+          <strong>{copy.preview}</strong>
+          <p>{copy.previewNote}</p>
+        </div>
+      </div>
+    )}
+
+    <div class="tool-layout">
+      <div
+        class="card tool-calc"
+        data-tool={entity.slug}
+        data-locale={locale}
+        data-strings={JSON.stringify(clientStrings)}
+        data-routes={JSON.stringify(publishedRoutes)}
+        data-max-file-bytes={MAX_FILE_BYTES}
+      >
+        {entity.slug === 'pace' && (
+          <>
+            <h2>{copy.paceFormTitle}</h2>
+            <form class="calc-form" data-pace-form novalidate>
+              <fieldset class="field unit-field">
+                <legend>{copy.paceMode}</legend>
+                <div class="segmented mode-segmented">
+                  <label><input type="radio" name="pace-mode" value="distance-time" checked /><span>{copy.modeDistanceTime}</span></label>
+                  <label><input type="radio" name="pace-mode" value="distance-pace" /><span>{copy.modeDistancePace}</span></label>
+                  <label><input type="radio" name="pace-mode" value="time-pace" /><span>{copy.modeTimePace}</span></label>
+                </div>
+              </fieldset>
+              <div class="field" data-mode-field="distance">
+                <label for="pace-distance">{copy.distance}</label>
+                <input id="pace-distance" data-distance type="number" min="0.001" step="any" value="10" inputmode="decimal" />
+                <p class="field-error" data-error="distance" hidden></p>
+              </div>
+              <fieldset class="field unit-field">
+                <legend>{copy.unit}</legend>
+                <div class="segmented">
+                  <label><input type="radio" name="unit" value="km" checked /><span>{copy.km}</span></label>
+                  <label><input type="radio" name="unit" value="mi" /><span>{copy.mi}</span></label>
+                </div>
+              </fieldset>
+              <div class="field" data-mode-field="duration">
+                <label for="pace-duration">{copy.duration}</label>
+                <input id="pace-duration" data-duration type="text" value="00:50:00" inputmode="numeric" autocomplete="off" aria-describedby="pace-duration-hint" />
+                <p class="field-hint" id="pace-duration-hint">{copy.durationHint}</p>
+                <p class="field-error" data-error="duration" hidden></p>
+              </div>
+              <div class="field" data-mode-field="pace" hidden>
+                <label for="pace-value">{copy.pace}</label>
+                <input id="pace-value" data-pace-value type="text" value="05:00" inputmode="numeric" autocomplete="off" aria-describedby="pace-value-hint" />
+                <p class="field-hint" id="pace-value-hint">{copy.paceHint}</p>
+                <p class="field-error" data-error="pace" hidden></p>
+              </div>
+              <button class="button primary wide" type="submit"><Icon name="timer" size={18} />{copy.calculate}</button>
+            </form>
+
+            <div class="calc-result" data-pace-result hidden>
+              <h2>{copy.paceResultTitle}</h2>
+              <span class="field-hint">{copy.averagePace}</span>
+              <div class="result-hero">
+                <strong data-pace-km>—</strong><span>/km</span>
+              </div>
+              <dl class="result-grid">
+                <div>
+                  <dt>{copy.paceMile}</dt>
+                  <dd><span data-pace-mi>—</span> /mi</dd>
+                </div>
+                <div>
+                  <dt>{copy.averageSpeed}</dt>
+                  <dd><span data-pace-speed>—</span> {copy.speedUnit}</dd>
+                </div>
+                <div>
+                  <dt>{copy.totalTime}</dt>
+                  <dd data-pace-duration>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.distance}</dt>
+                  <dd data-distance-used>—</dd>
+                </div>
+              </dl>
+              <p class="result-note">{copy.paceNote}</p>
+              <a class="button ghost wide" data-splits-link href={`/${locale}/tools/splits/`}>
+                <Icon name="list" size={17} />{copy.makeSplits}
+              </a>
+            </div>
+          </>
+        )}
+
+        {entity.slug === 'splits' && (
+          <>
+            <h2>{copy.splitsFormTitle}</h2>
+            <form class="calc-form" data-splits-form novalidate>
+              <div class="field">
+                <label for="splits-distance">{copy.totalDistance}</label>
+                <input id="splits-distance" data-distance type="number" min="0.001" step="any" value="42.195" inputmode="decimal" />
+                <p class="field-error" data-error="distance" hidden></p>
+              </div>
+              <fieldset class="field unit-field">
+                <legend>{copy.unit}</legend>
+                <div class="segmented">
+                  <label><input type="radio" name="unit" value="km" checked /><span>{copy.km}</span></label>
+                  <label><input type="radio" name="unit" value="mi" /><span>{copy.mi}</span></label>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label for="splits-duration">{copy.duration}</label>
+                <input id="splits-duration" data-duration type="text" value="03:30:00" inputmode="numeric" autocomplete="off" aria-describedby="splits-duration-hint" />
+                <p class="field-hint" id="splits-duration-hint">{copy.durationHint}</p>
+                <p class="field-error" data-error="duration" hidden></p>
+              </div>
+              <div class="field">
+                <label for="splits-split">{copy.splitDistance}</label>
+                <input id="splits-split" data-split-distance type="number" min="0.001" step="any" value="5" inputmode="decimal" />
+                <p class="field-error" data-error="split" hidden></p>
+              </div>
+              <fieldset class="field unit-field">
+                <legend>{copy.splitStrategy}</legend>
+                <div class="segmented">
+                  <label><input type="radio" name="split-strategy" value="even" checked /><span>{copy.strategyEven}</span></label>
+                  <label><input type="radio" name="split-strategy" value="negative" /><span>{copy.strategyNegative}</span></label>
+                </div>
+              </fieldset>
+              <div class="field" data-split-delta-field hidden>
+                <label for="splits-delta">{copy.delta}</label>
+                <input id="splits-delta" data-split-delta type="number" min="0" max="0.1" step="0.01" value="0.02" inputmode="decimal" aria-describedby="splits-delta-hint" />
+                <p class="field-hint" id="splits-delta-hint">{copy.deltaHint}</p>
+                <p class="field-error" data-error="delta" hidden></p>
+              </div>
+              <button class="button primary wide" type="submit"><Icon name="list" size={18} />{copy.calculate}</button>
+            </form>
+
+            <div class="calc-result" data-splits-result hidden>
+              <div class="result-heading">
+                <h2>{copy.splitsResultTitle}</h2>
+                <button class="button small ghost" type="button" data-print-splits>{copy.print}</button>
+              </div>
+              <p class="field-hint" data-splits-summary></p>
+              <div class="split-table-wrap">
+                <table class="split-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{copy.tableIndex}</th>
+                      <th scope="col">{copy.tableDistance}</th>
+                      <th scope="col">{copy.tableCumulative}</th>
+                      <th scope="col">{copy.tableSplit}</th>
+                    </tr>
+                  </thead>
+                  <tbody data-splits-body></tbody>
+                </table>
+              </div>
+              <p class="result-note">{copy.splitNote}</p>
+            </div>
+          </>
+        )}
+
+        {entity.slug === 'run-walk' && (
+          <>
+            <h2>{copy.runWalkFormTitle}</h2>
+            <form class="calc-form" data-run-walk-form novalidate>
+              <fieldset class="field unit-field">
+                <legend>{copy.runWalkMode}</legend>
+                <div class="segmented mode-segmented">
+                  <label><input type="radio" name="run-walk-mode" value="cycles" checked /><span>{copy.rwModeCycles}</span></label>
+                  <label><input type="radio" name="run-walk-mode" value="duration" /><span>{copy.rwModeDuration}</span></label>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label for="rw-run">{copy.runDuration}</label>
+                <input id="rw-run" data-run-duration type="text" value="02:00" inputmode="numeric" autocomplete="off" aria-describedby="rw-run-hint" />
+                <p class="field-hint" id="rw-run-hint">{copy.runDurationHint}</p>
+                <p class="field-error" data-error="run" hidden></p>
+              </div>
+              <div class="field">
+                <label for="rw-walk">{copy.walkDuration}</label>
+                <input id="rw-walk" data-walk-duration type="text" value="01:00" inputmode="numeric" autocomplete="off" aria-describedby="rw-walk-hint" />
+                <p class="field-hint" id="rw-walk-hint">{copy.walkDurationHint}</p>
+                <p class="field-error" data-error="walk" hidden></p>
+              </div>
+              <div class="field" data-run-walk-field="cycles">
+                <label for="rw-cycles">{copy.cyclesLabel}</label>
+                <input id="rw-cycles" data-cycles type="number" min="1" max="1000" step="1" value="8" inputmode="numeric" aria-describedby="rw-cycles-hint" />
+                <p class="field-hint" id="rw-cycles-hint">{copy.cyclesHint}</p>
+                <p class="field-error" data-error="cycles" hidden></p>
+              </div>
+              <div class="field" data-run-walk-field="duration" hidden>
+                <label for="rw-total">{copy.totalDuration}</label>
+                <input id="rw-total" data-total-duration type="text" value="00:30:00" inputmode="numeric" autocomplete="off" aria-describedby="rw-total-hint" />
+                <p class="field-hint" id="rw-total-hint">{copy.totalDurationHint}</p>
+                <p class="field-error" data-error="total" hidden></p>
+              </div>
+              <button class="button primary wide" type="submit"><Icon name="motion" size={18} />{copy.calculate}</button>
+            </form>
+
+            <div class="calc-result" data-run-walk-result hidden>
+              <h2>{copy.runWalkResultTitle}</h2>
+              <span class="field-hint">{copy.rwScheduled}</span>
+              <div class="result-hero">
+                <strong data-rw-scheduled>—</strong>
+              </div>
+              <dl class="result-grid">
+                <div>
+                  <dt>{copy.rwRunTotal}</dt>
+                  <dd data-rw-run>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.rwWalkTotal}</dt>
+                  <dd data-rw-walk>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.rwFullCycles}</dt>
+                  <dd data-rw-cycles>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.rwRequested}</dt>
+                  <dd data-rw-requested>—</dd>
+                </div>
+              </dl>
+              <p class="result-note" data-rw-status></p>
+              <div class="split-table-wrap">
+                <table class="split-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{copy.rwTableCycle}</th>
+                      <th scope="col">{copy.rwTableKind}</th>
+                      <th scope="col">{copy.rwTableDuration}</th>
+                      <th scope="col">{copy.rwTableStatus}</th>
+                    </tr>
+                  </thead>
+                  <tbody data-rw-body></tbody>
+                </table>
+              </div>
+              <p class="result-note">{copy.rwNote}</p>
+            </div>
+          </>
+        )}
+
+        {entity.slug === 'race-predict' && (
+          <>
+            <h2>{copy.raceFormTitle}</h2>
+            <form class="calc-form" data-race-form novalidate>
+              <fieldset class="field unit-field">
+                <legend>{copy.unit}</legend>
+                <div class="segmented">
+                  <label><input type="radio" name="unit" value="km" checked /><span>{copy.km}</span></label>
+                  <label><input type="radio" name="unit" value="mi" /><span>{copy.mi}</span></label>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label for="race-known-distance">{copy.knownDistance}</label>
+                <input id="race-known-distance" data-known-distance type="number" min="0.001" step="any" value="10" inputmode="decimal" aria-describedby="race-distance-hint" />
+                <p class="field-hint" id="race-distance-hint">{copy.raceDistanceHint}</p>
+                <p class="field-error" data-error="knownDistance" hidden></p>
+              </div>
+              <div class="field">
+                <label for="race-known-time">{copy.knownTime}</label>
+                <input id="race-known-time" data-known-time type="text" value="00:50:00" inputmode="numeric" autocomplete="off" aria-describedby="race-time-hint" />
+                <p class="field-hint" id="race-time-hint">{copy.raceTimeHint}</p>
+                <p class="field-error" data-error="knownTime" hidden></p>
+              </div>
+              <div class="field">
+                <label for="race-target-distance">{copy.targetDistance}</label>
+                <input id="race-target-distance" data-target-distance type="number" min="0.001" step="any" value="21.0975" inputmode="decimal" />
+                <p class="field-error" data-error="targetDistance" hidden></p>
+              </div>
+              <button class="button primary wide" type="submit"><Icon name="chart" size={18} />{copy.calculate}</button>
+            </form>
+
+            <div class="calc-result" data-race-result hidden>
+              <h2>{copy.raceResultTitle}</h2>
+              <span class="field-hint">{copy.racePredictedTime}</span>
+              <div class="result-hero">
+                <strong data-race-time>—</strong>
+              </div>
+              <dl class="result-grid">
+                <div>
+                  <dt>{copy.averagePace}</dt>
+                  <dd><span data-race-pace-km>—</span> /km</dd>
+                </div>
+                <div>
+                  <dt>{copy.paceMile}</dt>
+                  <dd><span data-race-pace-mi>—</span> /mi</dd>
+                </div>
+                <div>
+                  <dt>{copy.averageSpeed}</dt>
+                  <dd><span data-race-speed>—</span> {copy.speedUnit}</dd>
+                </div>
+                <div>
+                  <dt>{copy.raceRatio}</dt>
+                  <dd data-race-ratio>—</dd>
+                </div>
+              </dl>
+              <p class="result-note">{copy.racePaceNote}</p>
+            </div>
+          </>
+        )}
+
+        {entity.slug === 'track-convert' && (
+          <>
+            <h2>{copy.convertFormTitle}</h2>
+            <div class="track-form">
+              <div class="field">
+                <label for="convert-file">{copy.trackFile}</label>
+                <input id="convert-file" data-transform-file type="file" accept=".gpx,.geojson,.json,application/gpx+xml,application/geo+json" />
+                <p class="field-hint">{copy.trackFileHint}</p>
+                <p class="field-hint track-privacy"><Icon name="shield" size={14} />{copy.convertPrivacy}</p>
+              </div>
+              <fieldset class="field unit-field">
+                <legend>{copy.convertFormat}</legend>
+                <div class="segmented">
+                  <label><input type="radio" name="convert-format" value="gpx" /><span>GPX</span></label>
+                  <label><input type="radio" name="convert-format" value="geojson" checked /><span>GeoJSON</span></label>
+                </div>
+                <p class="field-hint">{copy.convertFormatHint}</p>
+              </fieldset>
+              <div class="track-actions">
+                <button class="button primary" type="button" data-transform-run disabled><Icon name="code" size={18} />{copy.convertStart}</button>
+                <button class="button ghost" type="button" data-transform-cancel hidden>{copy.trackCancel}</button>
+              </div>
+              <p class="track-status" role="status" aria-live="polite" data-transform-status></p>
+              <progress data-transform-progress max="1" value="0" hidden></progress>
+              <div class="track-error" data-transform-error hidden>
+                <Icon name="alert" size={18} />
+                <p data-transform-error-text></p>
+              </div>
+            </div>
+
+            <div class="calc-result" data-convert-result hidden>
+              <div class="result-heading">
+                <h2>{copy.convertResultTitle}</h2>
+                <span class="pill" data-convert-file-name></span>
+              </div>
+              <dl class="result-grid track-stats">
+                <div>
+                  <dt>{copy.convertSourceFormat}</dt>
+                  <dd data-convert-source>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.convertOutputFormat}</dt>
+                  <dd data-convert-format>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackPoints}</dt>
+                  <dd data-convert-points>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackSegments}</dt>
+                  <dd data-convert-segments>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackDistance}</dt>
+                  <dd data-convert-distance>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.convertOutputBytes}</dt>
+                  <dd data-convert-size>—</dd>
+                </div>
+              </dl>
+              <a class="button primary wide track-download" data-convert-download href="#" download hidden>
+                <Icon name="download" size={18} />{copy.convertDownload}
+              </a>
+              <p class="result-note">{copy.convertNote}</p>
+            </div>
+          </>
+        )}
+
+        {entity.slug === 'track-simplify' && (
+          <>
+            <h2>{copy.simplifyFormTitle}</h2>
+            <div class="track-form">
+              <div class="field">
+                <label for="simplify-file">{copy.trackFile}</label>
+                <input id="simplify-file" data-transform-file type="file" accept=".gpx,.geojson,.json,application/gpx+xml,application/geo+json" />
+                <p class="field-hint">{copy.trackFileHint}</p>
+                <p class="field-hint track-privacy"><Icon name="shield" size={14} />{copy.convertPrivacy}</p>
+              </div>
+              <div class="field">
+                <label for="simplify-tolerance">{copy.simplifyTolerance}</label>
+                <input id="simplify-tolerance" data-simplify-tolerance type="number" min="1" max="100" step="1" value="10" inputmode="numeric" aria-describedby="simplify-tolerance-hint" />
+                <p class="field-hint" id="simplify-tolerance-hint">{copy.simplifyToleranceHint}</p>
+                <p class="field-error" data-error="tolerance" hidden></p>
+              </div>
+              <div class="track-actions">
+                <button class="button primary" type="button" data-transform-run disabled><Icon name="layers" size={18} />{copy.simplifyStart}</button>
+                <button class="button ghost" type="button" data-transform-cancel hidden>{copy.trackCancel}</button>
+              </div>
+              <p class="track-status" role="status" aria-live="polite" data-transform-status></p>
+              <progress data-transform-progress max="1" value="0" hidden></progress>
+              <div class="track-error" data-transform-error hidden>
+                <Icon name="alert" size={18} />
+                <p data-transform-error-text></p>
+              </div>
+            </div>
+
+            <div class="calc-result" data-simplify-result hidden>
+              <div class="result-heading">
+                <h2>{copy.simplifyResultTitle}</h2>
+                <span class="pill" data-simplify-file-name></span>
+              </div>
+              <dl class="result-grid track-stats">
+                <div>
+                  <dt>{copy.simplifyOriginalPoints}</dt>
+                  <dd data-simplify-original>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.simplifySimplifiedPoints}</dt>
+                  <dd data-simplify-simplified>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.simplifyRetained}</dt>
+                  <dd data-simplify-retained>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.simplifyToleranceUsed}</dt>
+                  <dd data-simplify-tolerance-used>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.simplifyDistanceBefore}</dt>
+                  <dd data-simplify-distance-before>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.simplifyDistanceAfter}</dt>
+                  <dd data-simplify-distance-after>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.simplifyDistanceDelta}</dt>
+                  <dd data-simplify-distance-delta>—</dd>
+                </div>
+              </dl>
+              <div class="split-table-wrap">
+                <table class="split-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{copy.simplifyTableSegment}</th>
+                      <th scope="col">{copy.simplifyTableOriginal}</th>
+                      <th scope="col">{copy.simplifyTableSimplified}</th>
+                      <th scope="col">{copy.simplifyTableBefore}</th>
+                      <th scope="col">{copy.simplifyTableAfter}</th>
+                    </tr>
+                  </thead>
+                  <tbody data-simplify-body></tbody>
+                </table>
+              </div>
+              <a class="button primary wide track-download" data-simplify-download href="#" download hidden>
+                <Icon name="download" size={18} />{copy.simplifyDownload}
+              </a>
+              <p class="result-note">{copy.simplifyNote}</p>
+              <p class="result-note">{copy.simplifyLimitNote}</p>
+            </div>
+          </>
+        )}
+
+        {entity.slug === 'route-compare' && (
+          <>
+            <h2>{copy.routeCompareFormTitle}</h2>
+            {publishedRoutes.length < 2 ? (
+              <div class="empty-state" data-route-empty>
+                <Icon name="compare" size={42} />
+                <p><strong>{copy.routeCompareEmpty}</strong></p>
+                <p>{copy.routeCompareEmptyHint}</p>
+              </div>
+            ) : (
+              <form class="calc-form" data-route-form novalidate>
+                <p class="field-hint">{copy.routeCompareSelectHint}</p>
+                <div class="route-options" data-route-options>
+                  {publishedRoutes.map((route) => (
+                    <label class="route-option">
+                      <input type="checkbox" value={route.id} data-route-option />
+                      <span>
+                        <strong>{route.label}</strong>
+                        <small>
+                          {copy.routeVersion}: {route.version} ·{' '}
+                          {route.raceType === 'road-marathon' ? copy.routeTypeRoad : copy.routeTypeTrail}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p class="field-error" data-error="routes" hidden></p>
+                <button class="button primary wide" type="submit">
+                  <Icon name="compare" size={18} />{copy.routeCompareButton}
+                </button>
+              </form>
+            )}
+
+            <div class="calc-result" data-route-result hidden>
+              <h2>{copy.routeCompareResultTitle}</h2>
+              <div class="split-table-wrap">
+                <table class="split-table route-table">
+                  <thead data-route-head></thead>
+                  <tbody data-route-body></tbody>
+                </table>
+              </div>
+              <p class="result-note">{copy.routeCompareNote}</p>
+            </div>
+          </>
+        )}
+
+        {entity.slug === 'track-view' && (
+          <>
+            <h2>{copy.trackFormTitle}</h2>
+            <div class="track-form">
+              <div class="field">
+                <label for="track-file">{copy.trackFile}</label>
+                <input id="track-file" data-track-file type="file" accept=".gpx,.geojson,.json,application/gpx+xml,application/geo+json" />
+                <p class="field-hint">{copy.trackFileHint}</p>
+                <p class="field-hint track-privacy"><Icon name="shield" size={14} />{copy.trackPrivacy}</p>
+              </div>
+              <div class="track-actions">
+                <button class="button primary" type="button" data-track-run disabled><Icon name="upload" size={18} />{copy.trackStart}</button>
+                <button class="button ghost" type="button" data-track-cancel hidden>{copy.trackCancel}</button>
+              </div>
+              <p class="track-status" role="status" aria-live="polite" data-track-status></p>
+              <progress data-track-progress max="1" value="0" hidden></progress>
+              <div class="track-error" data-track-error hidden>
+                <Icon name="alert" size={18} />
+                <p data-track-error-text></p>
+              </div>
+            </div>
+
+            <div class="calc-result" data-track-result hidden>
+              <div class="result-heading">
+                <h2>{copy.trackResultTitle}</h2>
+                <span class="pill" data-track-file-name></span>
+              </div>
+              <dl class="result-grid track-stats">
+                <div>
+                  <dt>{copy.trackDistance}</dt>
+                  <dd data-track-distance>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackPoints}</dt>
+                  <dd data-track-points>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackSegments}</dt>
+                  <dd data-track-segments>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackElevation}</dt>
+                  <dd data-track-elevation>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackStartPoint}</dt>
+                  <dd data-track-start>—</dd>
+                </div>
+                <div>
+                  <dt>{copy.trackEndPoint}</dt>
+                  <dd data-track-end>—</dd>
+                </div>
+              </dl>
+              <div class="track-warnings" data-track-warnings-block hidden>
+                <strong>{copy.trackWarnings}</strong>
+                <ul data-track-warnings hidden></ul>
+              </div>
+            </div>
+          </>
+        )}
+
+        {!activeTool && (
+          <div class="empty-state">
+            <Icon name="tools" size={42} />
+            <p>{copy.notBuilt}</p>
+          </div>
+        )}
+      </div>
+
+      <aside class="tool-side">
+        <div class="card side-card">
+          <span class="side-icon"><Icon name="shield" size={20} /></span>
+          <h2>{copy.privacy}</h2>
+          <p>{copy.localOnly}</p>
+        </div>
+        {relatedKnowledge.length > 0 && (
+          <div class="card side-card">
+            <h2>{copy.relatedKnowledge}</h2>
+            <div class="side-links">
+              {relatedKnowledge.map((item) => (
+                <a href={entityHref(item, locale)} data-cross-site>
+                  <span>{content.translation(item, locale).title}</span>
+                  <Icon name="arrow-right" size={15} />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        {relatedRoutes.length > 0 && (
+          <div class="card side-card">
+            <h2>{copy.relatedRoutes}</h2>
+            <div class="side-links">
+              {relatedRoutes.map((item) => (
+                <a href={entityHref(item, locale)} data-cross-site>
+                  <span>{content.translation(item, locale).title}</span>
+                  <Icon name="arrow-right" size={15} />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </aside>
+    </div>
+
+    <div class="tool-narrative">
+      <h2 class="tool-section-title">{copy.formulaTitle}</h2>
+      <div class="prose" set:html={translation.html} />
+
+      <details class="spec-box">
+        <summary>{copy.specTitle}</summary>
+        <p class="field-hint">{copy.specHint}</p>
+        <dl>
+          <div><dt>{copy.formulaTitle}</dt><dd>{details.formulaDescription}</dd></div>
+          <div>
+            <dt>{copy.assumptions}</dt>
+            <dd><ul>{details.assumptions.map((item) => <li>{item}</li>)}</ul></dd>
+          </div>
+          <div><dt>{copy.rounding}</dt><dd>{details.rounding}</dd></div>
+        </dl>
+      </details>
+
+      <section aria-labelledby="examples-heading">
+        <h2 id="examples-heading" class="tool-section-title">{copy.examplesTitle}</h2>
+        <p class="field-hint">{copy.examplesHint}</p>
+        <div class="case-list">
+          {cases.map((item) => (
+            <details class="case-card">
+              <summary><span>{item.caseId}</span><span class="pill">{copy.examplesTitle}</span></summary>
+              <p>{item.basis}</p>
+              <div class="case-grid">
+                <div>
+                  <strong>{copy.inputLabel}</strong>
+                  <pre>{JSON.stringify(item.input, null, 2)}</pre>
+                </div>
+                <div>
+                  <strong>{copy.expectedLabel}</strong>
+                  <pre>{JSON.stringify(item.expected, null, 2)}</pre>
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section class="tool-sources" aria-labelledby="sources-heading">
+        <h2 id="sources-heading">{copy.sourcesTitle}</h2>
+        <div class="source-list">
+          {sources.map((source) => (
+            <div class="source-item">
+              <a href={source.url} rel="external noopener">{source.title} <Icon name="external" size={14} /></a>
+              <p>{source.claims.join(' ')}</p>
+              <p class="source-meta">
+                {source.publisher}
+                {' · '}{copy.accessed} {formatDate(source.accessedAt, locale)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section class="tool-method" aria-labelledby="method-heading">
+        <h2 id="method-heading">{copy.versionTitle}</h2>
+        <p>{copy.authors}: {authors.join(', ')}</p>
+        <p>{copy.updated}: {formatDate(entity.updatedAt, locale)}</p>
+        <p>{copy.reviewed}: {formatDate(entity.reviewedAt, locale)} · {reviews.length ? (locale === 'zh-CN' ? `${reviews.length} 条审阅记录` : `${reviews.length} review record(s)`) : copy.noReview}</p>
+      </section>
+
+      {relatedTools.length > 0 && (
+        <div class="tool-related-row">
+          <span class="field-hint">{copy.relatedTools}</span>
+          <div class="related-row">
+            {relatedTools.map((item) => (
+              <a class="related-link" href={toolHref(item, locale)}>
+                <span>{content.translation(item, locale).title}</span>
+                <Icon name="arrow-right" size={17} />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p class="tool-back"><a href={`/${locale}/`}><Icon name="arrow-left" size={15} />{copy.back}</a></p>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initCalculators } from '../../../client/calculators';
+  initCalculators();
+</script>
+
+<style>
+  .tool-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 26px;
+  }
+
+  .tool-header-icon {
+    display: grid;
+    place-items: center;
+    width: 74px;
+    height: 74px;
+    flex: 0 0 auto;
+    border-radius: 23px;
+    background: var(--primary-soft);
+  }
+
+  .tool-header-copy {
+    min-width: 0;
+  }
+
+  .tool-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .tool-header h1 {
+    margin: 0 0 8px;
+    font-size: clamp(2rem, 1.7rem + 1.8vw, 3.1rem);
+  }
+
+  .tool-header p {
+    max-width: 70ch;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .notice {
+    margin-bottom: 26px;
+  }
+
+  .tool-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .tool-calc {
+    padding: 26px;
+  }
+
+  .tool-calc > h2 {
+    margin: 0 0 20px;
+    font-size: 1.2rem;
+  }
+
+  .calc-form {
+    display: grid;
+    gap: 17px;
+  }
+
+  .field {
+    display: grid;
+    gap: 7px;
+  }
+
+  .field[hidden] {
+    display: none;
+  }
+
+  .field label,
+  .field legend {
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 750;
+  }
+
+  .field input[type='number'],
+  .field input[type='text'] {
+    width: 100%;
+    min-height: 50px;
+    padding: 0 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-input);
+    background: var(--surface);
+    font-size: 1rem;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 14%, transparent);
+  }
+
+  .field input[aria-invalid='true'] {
+    border-color: var(--coral);
+  }
+
+  .field-error {
+    margin: 0;
+    color: var(--coral);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .field-error[hidden] {
+    display: none;
+  }
+
+  .unit-field {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .segmented {
+    display: inline-flex;
+    flex-wrap: wrap;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
+  }
+
+  .mode-segmented span {
+    padding: 0 14px;
+  }
+
+  .segmented label {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .segmented input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .segmented span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 22px;
+    border-radius: var(--radius-pill);
+    color: var(--muted-strong);
+    font-size: 0.86rem;
+    font-weight: 750;
+  }
+
+  .segmented input:checked + span {
+    background: var(--primary-fill);
+    color: #07342c;
+  }
+
+  .segmented input:focus-visible + span {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .calc-result {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .calc-result[hidden] {
+    display: none;
+  }
+
+  .calc-result h2 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+  }
+
+  .result-hero {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 2px 0 18px;
+    color: var(--primary-text);
+  }
+
+  .result-hero strong {
+    font-size: clamp(3rem, 2.4rem + 2vw, 4.4rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .result-hero span {
+    color: var(--muted-strong);
+    font-size: 1rem;
+    font-weight: 750;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+  }
+
+  .result-grid > div {
+    padding: 12px 14px;
+    border-radius: var(--radius-input);
+    background: var(--surface-2);
+  }
+
+  .result-grid dt {
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .result-grid dd {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.02rem;
+    font-weight: 800;
+  }
+
+  .result-note {
+    margin: 16px 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .result-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .result-heading h2 {
+    margin: 0;
+  }
+
+  .split-table-wrap {
+    overflow-x: auto;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-input);
+  }
+
+  .split-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+
+  .split-table th,
+  .split-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .split-table th {
+    background: var(--surface-2);
+    color: var(--muted-strong);
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .split-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .split-table td:first-child {
+    color: var(--muted);
+  }
+
+  .track-form {
+    display: grid;
+    gap: 16px;
+  }
+
+  .track-privacy {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .track-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .track-actions .button[hidden] {
+    display: none;
+  }
+
+  .track-download {
+    margin-top: 18px;
+  }
+
+  .track-download[hidden] {
+    display: none;
+  }
+
+  .track-status {
+    min-height: 22px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .track-status:empty {
+    display: none;
+  }
+
+  progress {
+    width: 100%;
+    height: 8px;
+    accent-color: var(--primary);
+  }
+
+  progress[hidden] {
+    display: none;
+  }
+
+  .track-error {
+    display: flex;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: var(--radius-input);
+    background: var(--coral-soft);
+    color: var(--text);
+    font-size: 0.86rem;
+  }
+
+  .track-error[hidden] {
+    display: none;
+  }
+
+  .track-error p {
+    margin: 0;
+  }
+
+  .track-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .track-stats dd {
+    font-size: 0.94rem;
+    word-break: break-word;
+  }
+
+  .route-options {
+    display: grid;
+    gap: 10px;
+  }
+
+  .route-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-input);
+    background: var(--surface);
+    cursor: pointer;
+  }
+
+  .route-option input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--primary);
+  }
+
+  .route-option span {
+    display: grid;
+    gap: 4px;
+  }
+
+  .route-option strong {
+    font-size: 0.9rem;
+  }
+
+  .route-option small {
+    color: var(--muted);
+    font-size: 0.76rem;
+  }
+
+  .route-option:has(input:checked) {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  .route-option:has(input:disabled) {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .route-table {
+    white-space: normal;
+  }
+
+  .route-table thead th {
+    text-transform: none;
+    font-size: 0.85rem;
+  }
+
+  .route-table tbody th {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .route-table tbody th,
+  .route-table tbody td {
+    vertical-align: top;
+  }
+
+  .route-table td {
+    min-width: 150px;
+  }
+
+  .route-table tbody tr:last-child th,
+  .route-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .route-table td a {
+    color: var(--primary-text);
+    font-weight: 700;
+  }
+
+  .route-meta {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .track-warnings {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: var(--radius-input);
+    background: var(--yellow-soft);
+  }
+
+  .track-warnings[hidden] {
+    display: none;
+  }
+
+  .track-warnings strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+  }
+
+  .track-warnings ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--muted-strong);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  .track-warnings ul[hidden] {
+    display: none;
+  }
+
+  .tool-side {
+    display: grid;
+    gap: 14px;
+  }
+
+  .side-card {
+    padding: 20px;
+  }
+
+  .side-card h2 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+  }
+
+  .side-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.65;
+  }
+
+  .side-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background: var(--primary-soft);
+    color: var(--primary-text);
+  }
+
+  .side-links {
+    display: grid;
+    gap: 6px;
+  }
+
+  .side-links a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.84rem;
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+  .side-links a:hover {
+    background: var(--surface-2);
+  }
+
+  .side-links a svg {
+    flex: 0 0 auto;
+    color: var(--muted);
+  }
+
+  .tool-narrative {
+    max-width: 1000px;
+    margin-top: 44px;
+  }
+
+  .tool-section-title {
+    margin: 0 0 14px;
+    font-size: 1.55rem;
+  }
+
+  .tool-narrative .prose {
+    max-width: 100%;
+  }
+
+  .spec-box {
+    margin-top: 30px;
+    padding: 18px 22px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface-2);
+  }
+
+  .spec-box summary {
+    cursor: pointer;
+    font-weight: 750;
+  }
+
+  .spec-box dl {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0 0;
+  }
+
+  .spec-box dt {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--muted-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .spec-box dd {
+    margin: 4px 0 0;
+    color: var(--muted-strong);
+    font-size: 0.84rem;
+    line-height: 1.65;
+  }
+
+  .spec-box ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .case-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .case-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-input);
+    background: var(--surface);
+  }
+
+  .case-card summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 750;
+  }
+
+  .case-card > p {
+    margin: 0;
+    padding: 0 18px 12px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  .case-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 0 18px 18px;
+  }
+
+  .case-grid strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.76rem;
+    color: var(--muted-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .case-grid pre {
+    max-height: 240px;
+    overflow: auto;
+    margin: 0;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    font-size: 0.74rem;
+    line-height: 1.55;
+  }
+
+  .tool-sources {
+    margin-top: 40px;
+  }
+
+  .tool-sources h2 {
+    font-size: 1.3rem;
+  }
+
+  .tool-method {
+    margin-top: 32px;
+    padding: 18px 20px;
+    border-radius: var(--radius-card);
+    background: var(--surface-2);
+    color: var(--muted-strong);
+    font-size: 0.82rem;
+    line-height: 1.65;
+  }
+
+  .tool-method h2 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    color: var(--text);
+  }
+
+  .tool-method p {
+    margin: 2px 0;
+  }
+
+  .tool-related-row {
+    margin-top: 30px;
+  }
+
+  .tool-back {
+    margin-top: 32px;
+  }
+
+  .tool-back a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted-strong);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .tool-back a:hover {
+    color: var(--text);
+  }
+
+  @media (max-width: 980px) {
+    .tool-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-side {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 620px) {
+    .tool-header {
+      gap: 14px;
+    }
+
+    .tool-header-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 17px;
+    }
+
+    .tool-calc {
+      padding: 18px;
+    }
+
+    .result-grid,
+    .track-stats,
+    .case-grid,
+    .tool-side {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-header h1 {
+      font-size: 1.9rem;
+    }
+  }
+
+  @media print {
+    .site-header,
+    .site-footer,
+    .bottom-nav,
+    .preview-banner,
+    .tool-side,
+    .tool-calc > h2,
+    .calc-form,
+    .result-note,
+    .result-heading .button,
+    .tool-narrative,
+    .breadcrumbs {
+      display: none !important;
+    }
+
+    .tool-layout {
+      display: block;
+    }
+
+    .tool-calc {
+      border: 0;
+      box-shadow: none;
+    }
+
+    .calc-result {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+  }
+</style>

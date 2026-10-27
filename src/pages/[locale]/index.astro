@@ -1,0 +1,299 @@
+---
+import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Icon from '@paobu/core/components/Icon.astro';
+import SearchField from '@paobu/core/components/SearchField.astro';
+import { t, type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { siteContent } from '../../lib/content';
+import { toolDetails, toolHref, toolIcon } from '../../lib/view';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const content = siteContent();
+const tools = content.visible('tool').sort((a, b) => a.slug.localeCompare(b.slug));
+const paceTools = tools.filter((entity) => ['pace', 'splits', 'run-walk', 'race-predict'].includes(entity.slug));
+const trackTools = tools.filter((entity) => ['track-view', 'track-convert', 'track-simplify', 'route-compare'].includes(entity.slug));
+const copy = locale === 'zh-CN'
+  ? {
+      title: '跑步工具',
+      subtitle: '算清楚，再出发',
+      intro: '配速、分段和轨迹计算都在浏览器本地完成。公式、舍入和独立算例随每个工具公开。',
+      searchPlaceholder: '搜索配速、分段或轨迹工具',
+      paceTitle: '配速与分段',
+      trackTitle: '轨迹文件',
+      trackHint: '文件只在当前浏览器内读取，不上传；处理在 Worker 中执行。',
+      open: '打开工具',
+      formula: '公式公开',
+      local: '本地计算',
+      privacyTitle: '关于输入与结果',
+      privacyBody: '工具不会把距离、时长或轨迹文件发送到服务器。经验模型会标明适用条件，结果不构成训练、医疗或安全保证。',
+      progress: '按批次建设',
+      progressBody: '其余计划工具在公式、来源和独立算例完成后加入；不会先放空壳页面。',
+      refs: '公开公式与来源详见每个工具页。',
+    }
+  : {
+      title: 'Running tools',
+      subtitle: 'Do the math, then head out',
+      intro: 'Pace, split and track calculations run locally in the browser. Every tool publishes its formula, rounding and independent examples.',
+      searchPlaceholder: 'Search pace, split or track tools',
+      paceTitle: 'Pace and splits',
+      trackTitle: 'Track files',
+      trackHint: 'Files are read in this browser only and are never uploaded; processing runs in a Worker.',
+      open: 'Open tool',
+      formula: 'Formula published',
+      local: 'Local only',
+      privacyTitle: 'About inputs and results',
+      privacyBody: 'The tools do not send distances, durations or track files to a server. Empirical models state their limits; results are not training, medical or safety guarantees.',
+      progress: 'Built in batches',
+      progressBody: 'Further planned tools join once their formula, sources and independent examples are complete. Empty shells are not published.',
+      refs: 'Formula and sources are listed on each tool page.',
+    };
+---
+
+<BaseLayout
+  locale={locale}
+  title={`${copy.title} · RunMap`}
+  description={copy.intro}
+  active="tools"
+  preview={content.preview}
+>
+  <div class="page-shell">
+    <section class="tools-hero">
+      <div>
+        <span class="pill mint"><Icon name="tools" size={14} />{t(locale, 'tools')}</span>
+        <h1>{copy.title}</h1>
+        <p class="tools-subtitle">{copy.subtitle}</p>
+        <p class="tools-intro">{copy.intro}</p>
+      </div>
+      <div class="tools-search">
+        <SearchField
+          locale={locale}
+          action={`/${locale}/search/`}
+          placeholder={copy.searchPlaceholder}
+          id="tools-search"
+        />
+      </div>
+    </section>
+
+    <div class="trust-strip">
+      <span class="pill lavender"><Icon name="shield" size={13} />{copy.local}</span>
+      <span class="pill"><Icon name="file" size={13} />{copy.formula}</span>
+      <span class="pill"><Icon name="chart" size={13} />{copy.progress}</span>
+    </div>
+
+    <section aria-labelledby="pace-heading">
+      <div class="section-heading">
+        <h2 id="pace-heading">{copy.paceTitle}</h2>
+      </div>
+      <div class="tool-grid">
+        {paceTools.map((entity) => {
+          const translation = content.translation(entity, locale);
+          const details = toolDetails(entity);
+          return (
+            <a class="card tool-card" href={toolHref(entity, locale)}>
+              <span class="tool-card-icon tone-mint" aria-hidden="true"><Icon name={toolIcon(entity.slug)} size={27} /></span>
+              <span class="tool-card-body">
+                <span class="pill">{details.specVersion}</span>
+                <h3>{translation.title}</h3>
+                <p>{translation.summary}</p>
+                <span class="tool-card-action">{copy.open} <Icon name="arrow-right" size={15} /></span>
+              </span>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+
+    {trackTools.length > 0 && (
+      <section aria-labelledby="track-heading">
+        <div class="section-heading">
+          <div>
+            <h2 id="track-heading">{copy.trackTitle}</h2>
+            <p class="section-hint">{copy.trackHint}</p>
+          </div>
+        </div>
+        <div class="tool-grid">
+          {trackTools.map((entity) => {
+            const translation = content.translation(entity, locale);
+            const details = toolDetails(entity);
+            return (
+              <a class="card tool-card track" href={toolHref(entity, locale)}>
+                <span class="tool-card-icon tone-blue" aria-hidden="true"><Icon name={toolIcon(entity.slug)} size={27} /></span>
+                <span class="tool-card-body">
+                  <span class="pill">{details.specVersion}</span>
+                  <h3>{translation.title}</h3>
+                  <p>{translation.summary}</p>
+                  <span class="tool-card-action">{copy.open} <Icon name="arrow-right" size={15} /></span>
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    <div class="notice tone-blue tools-notice">
+      <Icon name="shield" size={19} />
+      <div>
+        <strong>{copy.privacyTitle}</strong>
+        <p>{copy.privacyBody}</p>
+      </div>
+    </div>
+
+    <p class="tools-footnote">{copy.progressBody} {copy.refs}</p>
+  </div>
+</BaseLayout>
+
+<style>
+  .tools-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
+    gap: 32px;
+    align-items: end;
+    margin-bottom: 20px;
+  }
+
+  .tools-hero h1 {
+    margin: 14px 0 4px;
+    font-size: clamp(2.6rem, 2rem + 2.6vw, 4.2rem);
+    letter-spacing: -0.02em;
+  }
+
+  .tools-subtitle {
+    margin: 0 0 14px;
+    color: var(--muted-strong);
+    font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.32rem);
+    font-weight: 650;
+  }
+
+  .tools-intro {
+    max-width: 68ch;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .tools-search {
+    padding-bottom: 6px;
+  }
+
+  .trust-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+
+  .section-hint {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+  }
+
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .tool-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 24px;
+    color: var(--text);
+    text-decoration: none;
+    transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+
+  .tool-card:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .tool-card-icon {
+    display: grid;
+    place-items: center;
+    width: 62px;
+    height: 62px;
+    flex: 0 0 auto;
+    border-radius: 19px;
+  }
+
+  .tool-card-icon.tone-mint { background: var(--primary-soft); }
+  .tool-card-icon.tone-blue { background: var(--blue-soft); }
+
+  .tool-card-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .tool-card-body .pill {
+    align-self: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .tool-card-body h3 {
+    margin: 0 0 5px;
+    font-size: 1.22rem;
+  }
+
+  .tool-card-body p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .tool-card-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--primary-text);
+    font-size: 0.82rem;
+    font-weight: 750;
+  }
+
+  .tools-notice {
+    margin-top: 38px;
+  }
+
+  .tools-notice strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .tools-notice p {
+    margin: 0;
+  }
+
+  .tools-footnote {
+    max-width: 82ch;
+    margin: 18px 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 900px) {
+    .tools-hero {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .tool-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-card {
+      padding: 18px;
+    }
+  }
+</style>

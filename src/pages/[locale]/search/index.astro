@@ -1,0 +1,363 @@
+---
+import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Icon from '@paobu/core/components/Icon.astro';
+import SearchField from '@paobu/core/components/SearchField.astro';
+import { t, type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { siteContent } from '../../../lib/content';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const content = siteContent();
+const toolCount = content.visible('tool').length;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '搜索工具',
+      intro: '在工具说明、公式与算例中搜索。索引由构建快照生成，不请求外部搜索服务。',
+      scope: '搜索范围',
+      scopeLocal: '工具站 · 仅当前语言 · 不含其他两站',
+      language: '中文',
+      indexed: `${toolCount} 个可见工具`,
+      statusInitial: '输入关键词开始搜索。',
+      statusLoading: '正在搜索…',
+      statusResults: '找到 {count} 条结果',
+      statusEmpty: '没有找到匹配工具。试试工具名、单位或公式术语。',
+      statusUnavailable: '搜索索引尚未生成。请先运行构建；本地开发服务器不提供搜索索引。',
+      statusError: '搜索暂时不可用，请稍后重试。工具页面仍可直接打开。',
+      loadMore: '显示更多',
+      preview: '待审阅',
+      noResultsTitle: '没有匹配结果',
+      noResultsBody: '可以换一个更具体的词，或先浏览全部工具。',
+      browse: '浏览全部工具',
+      hintTitle: '搜索提示',
+      hintBody: '可以输入配速、分段、GPX、GeoJSON 或单位名称。全站范围请回到主站的搜索页。',
+    }
+  : {
+      title: 'Search tools',
+      intro: 'Search tool descriptions, formulas and examples. The index is built from a fixed content snapshot, with no external search service.',
+      scope: 'Search scope',
+      scopeLocal: 'Tools site · current language only · routes and knowledge excluded',
+      language: 'English',
+      indexed: `${toolCount} visible tools`,
+      statusInitial: 'Enter a keyword to search.',
+      statusLoading: 'Searching…',
+      statusResults: '{count} results',
+      statusEmpty: 'No matching tools. Try a tool name, unit or formula term.',
+      statusUnavailable: 'The search index has not been built yet. Run a build first; the local development server does not serve the index.',
+      statusError: 'Search is temporarily unavailable. Tool pages remain available directly.',
+      loadMore: 'Show more',
+      preview: 'In review',
+      noResultsTitle: 'No matching results',
+      noResultsBody: 'Try a more specific term, or browse all tools first.',
+      browse: 'Browse all tools',
+      hintTitle: 'Search tips',
+      hintBody: 'Try pace, splits, GPX, GeoJSON or unit names. Use the main site search for all three sites.',
+    };
+---
+
+<BaseLayout
+  locale={locale}
+  title={`${copy.title} · RunMap`}
+  description={copy.intro}
+  active="tools"
+  preview={content.preview}
+  noindex
+>
+  <div
+    class="page-shell narrow"
+    id="search-app"
+    data-locale={locale}
+    data-strings={JSON.stringify(copy)}
+  >
+    <div class="breadcrumbs">
+      <ol>
+        <li><a href={`/${locale}/`}>{t(locale, 'home')}</a></li>
+        <li>{copy.title}</li>
+      </ol>
+    </div>
+
+    <div class="page-intro search-intro">
+      <div>
+        <span class="pill mint"><Icon name="search" size={14} />{copy.scope}</span>
+        <h1>{copy.title}</h1>
+        <p>{copy.intro}</p>
+      </div>
+    </div>
+
+    <div class="search-page-form">
+      <SearchField locale={locale} action={`/${locale}/search/`} id="search-page-input" />
+    </div>
+
+    <div class="search-scope">
+      <span class="pill">{copy.language}</span>
+      <span class="pill lavender">{copy.scopeLocal}</span>
+      <span class="pill">{copy.indexed}</span>
+    </div>
+
+    <p class="search-status" role="status" aria-live="polite" data-search-status>{copy.statusInitial}</p>
+
+    <div class="search-results" data-search-results></div>
+    <div class="search-more">
+      <button class="button ghost" type="button" data-search-more hidden>{copy.loadMore}</button>
+    </div>
+
+    <div class="empty-state" data-search-empty hidden>
+      <Icon name="tools" size={42} />
+      <h2>{copy.noResultsTitle}</h2>
+      <p>{copy.noResultsBody}</p>
+      <a class="button primary" href={`/${locale}/`}>{copy.browse}</a>
+    </div>
+
+    <div class="notice tone-blue search-hint">
+      <Icon name="info" size={18} />
+      <div>
+        <strong>{copy.hintTitle}</strong>
+        <p>{copy.hintBody}</p>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    const app = document.getElementById('search-app');
+    if (!app) return;
+    const strings = JSON.parse(app.dataset.strings || '{}');
+    const locale = app.dataset.locale || 'zh-CN';
+    const form = app.querySelector('.search-field');
+    const input = app.querySelector('input[name="q"]');
+    const status = app.querySelector('[data-search-status]');
+    const resultsRoot = app.querySelector('[data-search-results]');
+    const emptyRoot = app.querySelector('[data-search-empty]');
+    const moreButton = app.querySelector('[data-search-more]');
+
+    let pagefind = null;
+    let pagefindError = null;
+    let shown = 0;
+    let results = [];
+    let requestToken = 0;
+    let debounceTimer = 0;
+    const pageSize = 8;
+
+    function setStatus(message) {
+      if (status) status.textContent = message;
+    }
+
+    async function getPagefind() {
+      if (pagefind) return pagefind;
+      if (pagefindError) throw pagefindError;
+      try {
+        pagefind = await import('/pagefind/pagefind.js');
+        await pagefind.init();
+        return pagefind;
+      } catch (error) {
+        pagefindError = error;
+        throw error;
+      }
+    }
+
+    function renderResults(reset) {
+      if (!resultsRoot) return;
+      if (reset) {
+        resultsRoot.textContent = '';
+        shown = 0;
+      }
+      const next = results.slice(shown, shown + pageSize);
+      for (const result of next) {
+        const meta = result.meta || {};
+        const article = document.createElement('article');
+        article.className = 'card search-result';
+
+        const metaRow = document.createElement('div');
+        metaRow.className = 'search-result-meta';
+        const spec = document.createElement('span');
+        spec.className = 'pill mint';
+        spec.textContent = meta.specVersion || strings.title;
+        metaRow.appendChild(spec);
+        if (meta.preview === '1') {
+          const previewPill = document.createElement('span');
+          previewPill.className = 'pill coral';
+          previewPill.textContent = strings.preview || 'Preview';
+          metaRow.appendChild(previewPill);
+        }
+
+        const heading = document.createElement('h2');
+        const link = document.createElement('a');
+        try {
+          const parsed = new URL(result.url || '', location.origin);
+          link.href = parsed.origin === location.origin && ['http:', 'https:'].includes(parsed.protocol)
+            ? parsed.toString()
+            : '#';
+        } catch (error) {
+          link.href = '#';
+        }
+        link.textContent = meta.title || result.url || '';
+        heading.appendChild(link);
+
+        const summary = typeof meta.summary === 'string' ? meta.summary.trim() : '';
+
+        article.appendChild(metaRow);
+        article.appendChild(heading);
+        if (summary) {
+          const excerpt = document.createElement('p');
+          excerpt.className = 'search-result-excerpt';
+          excerpt.textContent = summary;
+          article.appendChild(excerpt);
+        }
+        resultsRoot.appendChild(article);
+      }
+      shown += next.length;
+      if (moreButton) moreButton.hidden = shown >= results.length;
+    }
+
+    function updateUrl(query) {
+      try {
+        const url = new URL(location.href);
+        if (query) url.searchParams.set('q', query);
+        else url.searchParams.delete('q');
+        history.replaceState(null, '', url.toString());
+      } catch (error) {}
+    }
+
+    async function runSearch(query) {
+      const token = ++requestToken;
+      const clean = query.trim();
+      updateUrl(clean);
+      if (!clean) {
+        results = [];
+        if (resultsRoot) resultsRoot.textContent = '';
+        if (emptyRoot) emptyRoot.hidden = true;
+        if (moreButton) moreButton.hidden = true;
+        setStatus(strings.statusInitial || '');
+        return;
+      }
+      setStatus(strings.statusLoading || 'Searching…');
+      if (emptyRoot) emptyRoot.hidden = true;
+      if (moreButton) moreButton.hidden = true;
+
+      let engine;
+      try {
+        engine = await getPagefind();
+      } catch (error) {
+        if (token !== requestToken) return;
+        if (resultsRoot) resultsRoot.textContent = '';
+        setStatus(strings.statusUnavailable || 'Search index unavailable.');
+        return;
+      }
+
+      try {
+        const response = await engine.search(clean, { filters: { locale: [locale], site: ['tools'] } });
+        if (token !== requestToken) return;
+        const loaded = await Promise.all(response.results.map((item) => item.data()));
+        if (token !== requestToken) return;
+        results = loaded;
+        if (loaded.length === 0) {
+          setStatus(strings.statusEmpty || 'No matches.');
+          if (resultsRoot) resultsRoot.textContent = '';
+          if (emptyRoot) emptyRoot.hidden = false;
+          if (moreButton) moreButton.hidden = true;
+          return;
+        }
+        setStatus((strings.statusResults || '').replace('{count}', String(loaded.length)));
+        if (emptyRoot) emptyRoot.hidden = true;
+        renderResults(true);
+      } catch (error) {
+        if (token !== requestToken) return;
+        if (resultsRoot) resultsRoot.textContent = '';
+        setStatus(strings.statusError || 'Search failed.');
+      }
+    }
+
+    const initialQuery = new URLSearchParams(location.search).get('q') || '';
+    if (input) input.value = initialQuery;
+
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      runSearch(input ? input.value : '');
+    });
+
+    input?.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => runSearch(input.value), 260);
+    });
+
+    input?.addEventListener('focus', () => {
+      getPagefind().catch(() => {});
+    }, { once: true });
+
+    moreButton?.addEventListener('click', () => renderResults(false));
+
+    if (initialQuery) {
+      setStatus(strings.statusLoading || 'Searching…');
+      getPagefind().then(() => runSearch(initialQuery)).catch(() => {
+        setStatus(strings.statusUnavailable || 'Search index unavailable.');
+      });
+    }
+  })();
+</script>
+
+<style>
+  .search-intro {
+    margin-bottom: 18px;
+  }
+
+  .search-intro h1 {
+    margin-top: 14px;
+  }
+
+  .search-page-form {
+    max-width: 760px;
+    margin-bottom: 16px;
+  }
+
+  .search-scope {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 20px;
+  }
+
+  .search-status {
+    min-height: 26px;
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 0.84rem;
+  }
+
+  .search-result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .search-result-excerpt {
+    margin-top: 8px;
+    line-height: 1.64;
+  }
+
+  .empty-state[hidden],
+  .search-more .button[hidden] {
+    display: none;
+  }
+
+  .search-more {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0 0;
+  }
+
+  .search-hint {
+    margin-top: 34px;
+  }
+
+  .search-hint strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .search-hint p {
+    margin: 0;
+  }
+</style>

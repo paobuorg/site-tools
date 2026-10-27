@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+.env
+vendor/*.tgz
+*.log
+playwright-report/
+test-results/
+screenshots/

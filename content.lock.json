@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "source": "local-snapshot",
+  "primaryRepository": "running-tools",
+  "digestAlgorithm": "sha256-tree-v1",
+  "digestScope": [
+    "content",
+    "data",
+    "assets"
+  ],
+  "generatedAt": "2026-10-27T21:54:58.151Z",
+  "repositories": [
+    {
+      "name": "running-routes",
+      "commit": null,
+      "digest": "6df6d90560279c674e8715c36f46603be1af0fb07461d8a54e9a310101ad16fa",
+      "fileCount": 99
+    },
+    {
+      "name": "running-knowledge",
+      "commit": null,
+      "digest": "b3c7c9925269f92aa0ce836a77a6a21f6aaa44e2bdc33135850ed714e46e5e27",
+      "fileCount": 155
+    },
+    {
+      "name": "running-tools",
+      "commit": null,
+      "digest": "3bddc5314783224ef49155eb13e43d68a3624c77ebbd0d221ad240eb53aa4b23",
+      "fileCount": 68
+    }
+  ],
+  "note": "Local source-tree lock for reproducible local builds. The repositories have no Git history or remote yet; replace commit null with a pinned full commit SHA when the repositories are initialized and published."
+}

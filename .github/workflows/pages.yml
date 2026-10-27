@@ -1,0 +1,111 @@
+name: Build and deploy site-tools
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-site-tools
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '24'
+  PNPM_VERSION: '10.18.3'
+  PAOBU_REPOS_DIR: ${{ github.workspace }}/content-repos
+  PREVIEW_UNREVIEWED: '0'
+  PAOBU_CORE_ARTIFACT_URL: ${{ vars.PAOBU_CORE_ARTIFACT_URL }}
+  PAOBU_CORE_SHA256: ${{ vars.PAOBU_CORE_SHA256 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout site-tools
+        uses: actions/checkout@v4
+
+      - name: Checkout running-routes
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/running-routes
+          path: content-repos/running-routes
+          token: ${{ secrets.PAOBU_CONTENT_TOKEN || github.token }}
+
+      - name: Checkout running-knowledge
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/running-knowledge
+          path: content-repos/running-knowledge
+          token: ${{ secrets.PAOBU_CONTENT_TOKEN || github.token }}
+
+      - name: Checkout running-tools
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/running-tools
+          path: content-repos/running-tools
+          token: ${{ secrets.PAOBU_CONTENT_TOKEN || github.token }}
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Download locked core artifact
+        shell: bash
+        run: |
+          if [ -z "$PAOBU_CORE_ARTIFACT_URL" ] || [ -z "$PAOBU_CORE_SHA256" ]; then
+            echo "Set repository variables PAOBU_CORE_ARTIFACT_URL and PAOBU_CORE_SHA256 from the site-www core release."
+            exit 1
+          fi
+          mkdir -p vendor
+          curl --fail --silent --show-error --location "$PAOBU_CORE_ARTIFACT_URL" --output vendor/paobu-core.tgz
+          echo "$PAOBU_CORE_SHA256  vendor/paobu-core.tgz" | sha256sum --check -
+          node -e "const fs=require('node:fs');const lock=JSON.parse(fs.readFileSync('core.lock.json','utf8'));if(lock.sha256!==process.env.PAOBU_CORE_SHA256){console.error('core.lock.json sha256 mismatch');process.exit(1)}"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate content
+        run: pnpm test:content
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Require published content
+        run: pnpm check:production
+
+      - name: Build static site
+        run: pnpm build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,32 @@
+{
+  "name": "site-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.18.3",
+  "engines": {
+    "node": ">=22.23.4 <25"
+  },
+  "scripts": {
+    "dev": "astro dev --port 4323",
+    "build": "astro build && tsx scripts/postbuild.mjs",
+    "preview": "astro preview --port 4423",
+    "check": "astro check",
+    "test": "tsx --test tests/*.test.ts",
+    "test:content": "tsx scripts/validate-content.mjs",
+    "core:sync": "node scripts/sync-core.mjs",
+    "check:production": "tsx scripts/check-production-content.mjs"
+  },
+  "dependencies": {
+    "@paobu/core": "file:vendor/paobu-core.tgz",
+    "astro": "7.4.2",
+    "fast-xml-parser": "5.11.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@types/node": "24.19.2",
+    "pagefind": "1.5.2",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

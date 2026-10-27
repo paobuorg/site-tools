@@ -3,14 +3,16 @@ import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
 import Icon from '@paobu/core/components/Icon.astro';
 import SearchField from '@paobu/core/components/SearchField.astro';
 import { t, type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
 import { siteContent } from '../../lib/content';
 import { toolDetails, toolHref, toolIcon } from '../../lib/view';
 
 export function getStaticPaths() {
-  return LOCALES.map((locale) => ({ params: { locale } }));
+  return LOCALES.map((locale) => ({ params: { locale: localeStaticParam(locale) }, props: { locale } }));
 }
 
-const locale = Astro.params.locale as Locale;
+const locale = Astro.props.locale as Locale;
+const prefix = localePrefix(locale);
 const content = siteContent();
 const tools = content.visible('tool').sort((a, b) => a.slug.localeCompare(b.slug));
 const paceTools = tools.filter((entity) => ['pace', 'splits', 'run-walk', 'race-predict'].includes(entity.slug));
@@ -70,7 +72,7 @@ const copy = locale === 'zh-CN'
       <div class="tools-search">
         <SearchField
           locale={locale}
-          action={`/${locale}/search/`}
+          action={`${prefix}/search/`}
           placeholder={copy.searchPlaceholder}
           id="tools-search"
         />

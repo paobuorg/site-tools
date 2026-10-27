@@ -3,6 +3,7 @@ import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
 import Icon from '@paobu/core/components/Icon.astro';
 import type { RouteDetails } from '@paobu/core/content';
 import { otherLocale, type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
 import { breadcrumbList } from '@paobu/core/lib/seo';
 import { MAX_FILE_BYTES } from '../../../lib/parse-track';
 import { siteContent } from '../../../lib/content';
@@ -18,13 +19,14 @@ export function getStaticPaths() {
   const content = siteContent();
   return LOCALES.flatMap((locale) =>
     content.visible('tool').map((entity) => ({
-      params: { locale, slug: entity.slug },
-      props: { entityId: entity.entityId },
+      params: { locale: localeStaticParam(locale), slug: entity.slug },
+      props: { entityId: entity.entityId, locale },
     })),
   );
 }
 
-const locale = Astro.params.locale as Locale;
+const locale = Astro.props.locale as Locale;
+const prefix = localePrefix(locale);
 const content = siteContent();
 const entity = content.byId(Astro.props.entityId);
 if (!entity) throw new Error(`Tool ${Astro.props.entityId} is not visible`);
@@ -495,11 +497,11 @@ const clientStrings = {
 };
 const title = `${translation.title} · RunMap`;
 const pageOrigin = Astro.site ?? Astro.url.origin;
-const pageUrl = new URL(`/${locale}/tools/${entity.slug}/`, pageOrigin).toString();
+const pageUrl = new URL(`${prefix}/tools/${entity.slug}/`, pageOrigin).toString();
 const structuredData = [
   breadcrumbList([
-    { name: copy.home, url: new URL(`/${locale}/`, pageOrigin).toString() },
-    { name: copy.tools, url: new URL(`/${locale}/`, pageOrigin).toString() },
+    { name: copy.home, url: new URL(`${prefix}/`, pageOrigin).toString() },
+    { name: copy.tools, url: new URL(`${prefix}/`, pageOrigin).toString() },
     { name: translation.title, url: pageUrl },
   ]),
 ];
@@ -512,14 +514,14 @@ const structuredData = [
   active="tools"
   preview={content.preview}
   ogType="article"
-  alternateHref={`/${other}/tools/${entity.slug}/`}
+  alternateHref={`${localePrefix(other)}/tools/${entity.slug}/`}
   structuredData={structuredData}
 >
   <div class="page-shell">
     <div class="breadcrumbs">
       <ol>
-        <li><a href={`/${locale}/`}>{copy.home}</a></li>
-        <li><a href={`/${locale}/`}>{copy.tools}</a></li>
+        <li><a href={`${prefix}/`}>{copy.home}</a></li>
+        <li><a href={`${prefix}/`}>{copy.tools}</a></li>
         <li>{translation.title}</li>
       </ol>
     </div>
@@ -620,7 +622,7 @@ const structuredData = [
                 </div>
               </dl>
               <p class="result-note">{copy.paceNote}</p>
-              <a class="button ghost wide" data-splits-link href={`/${locale}/tools/splits/`}>
+              <a class="button ghost wide" data-splits-link href={`${prefix}/tools/splits/`}>
                 <Icon name="list" size={17} />{copy.makeSplits}
               </a>
             </div>
@@ -1217,7 +1219,7 @@ const structuredData = [
         </div>
       )}
 
-      <p class="tool-back"><a href={`/${locale}/`}><Icon name="arrow-left" size={15} />{copy.back}</a></p>
+      <p class="tool-back"><a href={`${prefix}/`}><Icon name="arrow-left" size={15} />{copy.back}</a></p>
     </div>
   </div>
 </BaseLayout>

@@ -1,4 +1,5 @@
 import { formatDuration, parseDuration } from '@paobu/core/geo';
+import { localePrefix } from '@paobu/core/lib/routing';
 import {
   calculateDistanceFromPace,
   calculatePace,
@@ -191,7 +192,7 @@ function initPace(root: HTMLElement) {
     }
     if (splitsLink) {
       const resolvedDistance = Number(value.distance.toFixed(3));
-      splitsLink.href = `/${locale}/tools/splits/?distance=${encodeURIComponent(String(resolvedDistance))}&unit=${unit}&duration=${encodeURIComponent(formatDuration(value.displayDuration))}&split=1`;
+      splitsLink.href = `${localePrefix(locale)}/tools/splits/?distance=${encodeURIComponent(String(resolvedDistance))}&unit=${unit}&duration=${encodeURIComponent(formatDuration(value.displayDuration))}&split=1`;
     }
     if (result) result.hidden = false;
     updateUrl({

@@ -18,7 +18,7 @@
 - `output: 'static'`、尾斜杠目录输出，规范域名为 `https://tools.paobu.org`。
 - 计算不依赖后端：纯算术在客户端函数中执行；GPX/GeoJSON 解析、测地距离与简化在 Web Worker 中执行。
 - `fast-xml-parser` 5.11.2，Pagefind 1.5.2。
-- `@paobu/core` 0.2.13，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `b3e5b077614b661c0c553ef1b600386d9a946bef83a458afd0c0889f7a1efb03`。
+- `@paobu/core` 0.2.14，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `1fcda15d29b7e1de0240ea8b6061f92fc8dc7887a2469c85a3011584bd2bcd89`。
 
 ## 工具与代码位置
 
@@ -51,7 +51,7 @@ pnpm build
 pnpm dev
 ```
 
-- 开发：`http://localhost:4323`，语言入口 `/zh-CN/` 与 `/en/`。
+- 开发：`http://localhost:4323`，语言入口 `/` 与 `/en/`。
 - 预览构建：`pnpm preview`，`http://localhost:4423`。构建时跨站链接按实际加载的 `.env` 生成（当前指向开发端口），验证跳转需同时运行对应站点；生产构建必须显式覆盖三个来源，否则 `.env` 的 localhost 会进入 HTML。
 - 单元测试：`pnpm test`（`tsx --test tests/*.ts`）。
 - 生产模式：`PREVIEW_UNREVIEWED=0 pnpm build` 生成发布文件；`pnpm check:production` 当前通过（8 个工具已发布）。

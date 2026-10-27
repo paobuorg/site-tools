@@ -18,7 +18,7 @@ The site project for `tools.paobu.org`: pace, splits, run-walk, race prediction,
 - `output: 'static'` with directory-style trailing slashes; canonical origin `https://tools.paobu.org`.
 - No backend is needed for calculation: arithmetic runs in client functions; GPX/GeoJSON parsing, geodesic distance and simplification run in Web Workers.
 - `fast-xml-parser` 5.11.2, Pagefind 1.5.2.
-- `@paobu/core` 0.2.13, installed from `vendor/paobu-core.tgz`; `core.lock.json` records artifact SHA-256 `b3e5b077614b661c0c553ef1b600386d9a946bef83a458afd0c0889f7a1efb03`.
+- `@paobu/core` 0.2.14, installed from `vendor/paobu-core.tgz`; `core.lock.json` records artifact SHA-256 `1fcda15d29b7e1de0240ea8b6061f92fc8dc7887a2469c85a3011584bd2bcd89`.
 
 ## Tools and code locations
 
@@ -51,7 +51,7 @@ pnpm build
 pnpm dev
 ```
 
-- Development: `http://localhost:4323`, with `/zh-CN/` and `/en/` entry points.
+- Development: `http://localhost:4323`, with `/` and `/en/` entry points.
 - Built preview: `pnpm preview`, `http://localhost:4423`. Cross-site links are baked from the `.env` that is actually loaded (currently the development ports), so following them locally also needs those sites running; a production build must explicitly override all three origins, otherwise localhost values enter the HTML.
 - Unit tests: `pnpm test` (`tsx --test tests/*.ts`).
 - Content validation: `pnpm test:content`.

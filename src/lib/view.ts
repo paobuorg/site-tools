@@ -1,5 +1,6 @@
 import type { ContentEntity, ToolDetails } from '@paobu/core/content';
 import type { Locale } from '@paobu/core/lib/i18n';
+import { localePrefix } from '@paobu/core/lib/routing';
 import { siteOrigin } from '@paobu/core/lib/sites';
 
 export type ToolCategory = 'pace' | 'track';
@@ -39,15 +40,16 @@ export function toolIcon(slug: string): string {
 }
 
 export function toolHref(entity: ContentEntity, locale: Locale): string {
-  return `/${locale}/tools/${entity.slug}/`;
+  return `${localePrefix(locale)}/tools/${entity.slug}/`;
 }
 
 export function entityHref(entity: ContentEntity, locale: Locale): string {
+  const prefix = localePrefix(locale);
   if (entity.kind === 'tool') return toolHref(entity, locale);
-  if (entity.kind === 'route') return `${siteOrigin('routes')}/${locale}/routes/${entity.slug}/`;
+  if (entity.kind === 'route') return `${siteOrigin('routes')}${prefix}/routes/${entity.slug}/`;
   const type = (entity.details as { contentType?: string }).contentType;
   const section = type === 'glossary' ? 'glossary' : type === 'learning-path' ? 'paths' : 'articles';
-  return `${siteOrigin('knowledge')}/${locale}/${section}/${entity.slug}/`;
+  return `${siteOrigin('knowledge')}${prefix}/${section}/${entity.slug}/`;
 }
 
 export function formatDate(value: string | null, locale: Locale): string {

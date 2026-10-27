@@ -12,19 +12,19 @@
   "repositories": [
     {
       "name": "running-routes",
-      "commit": null,
+      "commit": "652b96061444c13e47a8a8635ba8abbf8fd30e54",
       "digest": "6df6d90560279c674e8715c36f46603be1af0fb07461d8a54e9a310101ad16fa",
       "fileCount": 99
     },
     {
       "name": "running-knowledge",
-      "commit": null,
+      "commit": "b734d96256b9472b3deac93f27d56c10e545b125",
       "digest": "b3c7c9925269f92aa0ce836a77a6a21f6aaa44e2bdc33135850ed714e46e5e27",
       "fileCount": 155
     },
     {
       "name": "running-tools",
-      "commit": null,
+      "commit": "2d696fdadab7b671d0f7c9e6d0f8cfadf441942a",
       "digest": "3bddc5314783224ef49155eb13e43d68a3624c77ebbd0d221ad240eb53aa4b23",
       "fileCount": 68
     }

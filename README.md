@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-- 八项工具、双语说明和二十个算例已实现；本地静态构建通过检查，不是已部署网站。六个仓库都没有提交、远程仓库或线上地址。
+- 八项工具、双语说明和二十个算例已实现；本地静态构建通过检查，不是已部署网站。六个公开仓库已推送 GitHub，Pages/DNS 尚未启用。
 - 八项工具已于 2026-10-27 完成 **AI 辅助编辑审阅**并发布；每项有双语 `approve` 记录和匹配 contentDigest。审阅身份明确标注为 AI 辅助，不是独立专业审阅；限制见 site-www 的 [ai-review-report.md](../site-www/evidence/2026-10-27/review/ai-review-report.md)。
 - 路线比较只读取已发布路线；当前 16 条路线已发布，因此比较页有真实可选记录。
 - 本地发布准备已建立：生产构建会生成 `CNAME`、`.nojekyll`、`robots.txt`、`sitemap.xml`、`release-manifest.json`、PWA manifest、`sw.js` 与离线页；`.github/workflows/pages.yml` 已定义但未在 GitHub 执行。生产工具可见 8 项，`pnpm check:production` 通过。

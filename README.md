@@ -6,10 +6,10 @@
 
 ## 当前状态
 
-- 八项工具、双语说明和二十个算例已实现；本地静态构建通过检查，不是已部署网站。六个公开仓库已推送 GitHub，Pages/DNS 尚未启用。
+- 工具站已部署到 GitHub Pages，线上地址为 `https://tools.paobu.org/`；Pages 与 HTTPS 已启用。
 - 八项工具已于 2026-10-27 完成 **AI 辅助编辑审阅**并发布；每项有双语 `approve` 记录和匹配 contentDigest。审阅身份明确标注为 AI 辅助，不是独立专业审阅；限制见 site-www 的 [ai-review-report.md](../site-www/evidence/2026-10-27/review/ai-review-report.md)。
 - 路线比较只读取已发布路线；当前 16 条路线已发布，因此比较页有真实可选记录。
-- 本地发布准备已建立：生产构建会生成 `CNAME`、`.nojekyll`、`robots.txt`、`sitemap.xml`、`release-manifest.json`、PWA manifest、`sw.js` 与离线页；`.github/workflows/pages.yml` 已定义。Pages 尚未启用，bootstrap 运行因未启用 Pages 失败并已清理，Actions 暂暂停。生产工具可见 8 项，`pnpm check:production` 通过。
+- 本地发布准备已建立：生产构建会生成 `CNAME`、`.nojekyll`、`robots.txt`、`sitemap.xml`、`release-manifest.json`、PWA manifest、`sw.js` 与离线页；`.github/workflows/pages.yml` 已成功部署，`https://tools.paobu.org/` 已启用 HTTPS。生产工具可见 8 项，`pnpm check:production` 通过。
 - T12 的轨迹慢提示、30 秒超时与取消状态已在 `site-www` 的 `pnpm qa:track` 中通过；它用挂起 Worker 和缩短计时器模拟，不代表真实低端设备的处理速度。
 
 ## 技术基线

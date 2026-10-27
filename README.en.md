@@ -6,10 +6,10 @@ The site project for `tools.paobu.org`: pace, splits, run-walk, race prediction,
 
 ## Status
 
-- Eight tools, bilingual documentation and twenty cases are implemented; the local static build passes its checks. This is not a deployed site. All six public repositories have been pushed to GitHub; Pages and DNS are not enabled.
+- The tools site is deployed on GitHub Pages at `https://tools.paobu.org/`; Pages and HTTPS are enabled.
 - All eight tools were **AI-assisted editorially reviewed** and published on 2026-10-27; each has bilingual `approve` records and matching contentDigests. The reviewer is explicitly labelled AI-assisted, not independent professional review; limitations are in [ai-review-report.md](../site-www/evidence/2026-10-27/review/ai-review-report.md).
 - Route comparison reads published routes only. Sixteen routes are currently published, so the page has real selectable records.
-- Local release preparation exists: production builds emit `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`, `release-manifest.json`, the PWA manifest, `sw.js` and an offline page. `.github/workflows/pages.yml` is defined. Pages is not enabled; the bootstrap run failed for that reason, was removed, and Actions is paused. Production shows 8 tools and `pnpm check:production` passes.
+- Local release preparation exists: production builds emit `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`, `release-manifest.json`, the PWA manifest, `sw.js` and an offline page. The Pages workflow has deployed successfully and `https://tools.paobu.org/` enforces HTTPS. Production shows 8 tools and `pnpm check:production` passes.
 - The T12 slow hint, 30s timeout and cancel state pass in `site-www` via `pnpm qa:track`; the check uses a hanging Worker and shortened timers, not a physical low-end device.
 
 ## Technical baseline

@@ -24,7 +24,7 @@ function serializeGeoJson(segments: Coordinate[][]): string {
 function serializeGpx(segments: Coordinate[][]): string {
   const lines = [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<gpx version="1.1" creator="RunMap track tools" xmlns="http://www.topografix.com/GPX/1/1">',
+    '<gpx version="1.1" creator="RunUp track tools" xmlns="http://www.topografix.com/GPX/1/1">',
     '  <trk>',
   ];
   for (const segment of segments) {

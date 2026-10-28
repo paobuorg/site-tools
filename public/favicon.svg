@@ -1,13 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="跑地图 RunMap">
-  <defs>
-    <linearGradient id="g" x1="8" y1="5" x2="41" y2="44" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#45E0BF"/>
-      <stop offset=".58" stop-color="#08B89D"/>
-      <stop offset="1" stop-color="#1761A8"/>
-    </linearGradient>
-  </defs>
-  <circle cx="24" cy="24" r="22" fill="url(#g)"/>
-  <path d="M10 28.5c4.4-8.4 8.7-8.4 13 0s9.2 3.4 15-6" fill="none" stroke="#F8FFFC" stroke-width="3.5" stroke-linecap="round"/>
-  <circle cx="15" cy="17.5" r="3.2" fill="#F8FFFC" opacity=".94"/>
-  <path d="M29.5 15.5 37 22" stroke="#F8FFFC" stroke-width="2.4" stroke-linecap="round" opacity=".72"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="跑起来 RUNUP">
+
+<defs>
+<linearGradient id="bean" x1="18" y1="16" x2="78" y2="82" gradientUnits="userSpaceOnUse">
+<stop stop-color="#45E0BF"/><stop offset=".55" stop-color="#08B89D"/><stop offset="1" stop-color="#1761A8"/>
+</linearGradient>
+</defs>
+<circle cx="48" cy="48" r="44" fill="#E8FAF4"/>
+<path d="M48 13C67 13 81 28 80 47c-1 21-15 35-33 34C29 80 16 66 17 47 18 28 31 13 48 13Z" fill="url(#bean)" stroke="#074C44" stroke-width="2.8"/>
+<path d="M22 46C33 33 41 39 48 30C53 24 60 26 66 21" fill="none" stroke="#F8FFFC" stroke-width="5.2" stroke-linecap="round"/>
+<circle cx="22" cy="46" r="3.6" fill="#F56765" stroke="#F8FFFC" stroke-width="1.4"/>
+<circle cx="39" cy="56" r="3.1" fill="#074C44"/>
+<circle cx="58" cy="56" r="3.1" fill="#074C44"/>
+<path d="M43 65c3 2.4 7 2.4 10 0" fill="none" stroke="#074C44" stroke-width="2.2" stroke-linecap="round"/>
 </svg>

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
-import Icon from '@paobu/core/components/Icon.astro';
+import Bean from '@paobu/core/components/Bean.astro';
 import { t } from '@paobu/core/lib/i18n';
 const locale = 'zh-CN' as const;
 ---
@@ -13,7 +13,7 @@ const locale = 'zh-CN' as const;
 >
   <div class="page-shell narrow">
     <div class="empty-state">
-      <Icon name="tools" size={46} />
+      <Bean expression="lost" size={92} className="empty-mascot" label="豆客迷路了" />
       <h2>{t(locale, 'notFound')}</h2>
       <p>{t(locale, 'notFoundBody')}</p>
       <a class="button primary" href="/">{t(locale, 'backHome')}</a>

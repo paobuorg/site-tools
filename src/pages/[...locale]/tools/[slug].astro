@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Bean from '@paobu/core/components/Bean.astro';
 import Icon from '@paobu/core/components/Icon.astro';
 import LegalNotice from '@paobu/core/components/LegalNotice.astro';
 import type { RouteDetails } from '@paobu/core/content';
@@ -501,7 +502,7 @@ const clientStrings = {
   suspiciousJumps: locale === 'zh-CN' ? '发现 {count} 处相邻点距离超过 10 公里，可能是断点或异常坐标。' : 'Found {count} point-to-point gaps over 10 km, likely breaks or bad coordinates.',
   multipleSegments: locale === 'zh-CN' ? '文件包含 {count} 个线段；距离分别累计，不把线段端点人为连接。' : 'The file contains {count} segments; distances are summed without joining their endpoints.',
 };
-const title = `${translation.title} · RunMap`;
+const title = `${translation.title} · RUNUP`;
 const pageOrigin = Astro.site ?? Astro.url.origin;
 const pageUrl = new URL(`${prefix}/tools/${entity.slug}/`, pageOrigin).toString();
 const structuredData = [
@@ -522,6 +523,7 @@ const structuredData = [
   ogType="article"
   alternateHref={`${localePrefix(other)}/tools/${entity.slug}/`}
   structuredData={structuredData}
+  footerAd
 >
   <div class="page-shell">
     <div class="breadcrumbs">
@@ -1003,7 +1005,7 @@ const structuredData = [
             <h2>{copy.routeCompareFormTitle}</h2>
             {publishedRoutes.length < 2 ? (
               <div class="empty-state" data-route-empty>
-                <Icon name="compare" size={42} />
+                <Bean expression="tired" size={92} className="empty-mascot" />
                 <p><strong>{copy.routeCompareEmpty}</strong></p>
                 <p>{copy.routeCompareEmptyHint}</p>
               </div>

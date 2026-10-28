@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Bean from '@paobu/core/components/Bean.astro';
 import Icon from '@paobu/core/components/Icon.astro';
 import SearchField from '@paobu/core/components/SearchField.astro';
 import { t, type Locale, LOCALES } from '@paobu/core/lib/i18n';
@@ -61,7 +62,7 @@ const copy = locale === 'zh-CN'
 
 <BaseLayout
   locale={locale}
-  title={`${copy.title} · RunMap`}
+  title={`${copy.title} · RUNUP`}
   description={copy.intro}
   active="tools"
   preview={content.preview}
@@ -106,7 +107,7 @@ const copy = locale === 'zh-CN'
     </div>
 
     <div class="empty-state" data-search-empty hidden>
-      <Icon name="tools" size={42} />
+      <Bean expression="search" size={92} className="empty-mascot" />
       <h2>{copy.noResultsTitle}</h2>
       <p>{copy.noResultsBody}</p>
       <a class="button primary" href={`${prefix}/`}>{copy.browse}</a>

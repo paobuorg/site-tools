@@ -1,6 +1,6 @@
 {
-  "name": "跑地图工具 · RunMap Tools",
-  "short_name": "跑地图工具",
+  "name": "跑起来工具 · RUNUP Tools",
+  "short_name": "跑起来工具",
   "description": "在浏览器本地运行的跑步计算与轨迹工具。",
   "lang": "zh-CN",
   "start_url": "/",
@@ -14,6 +14,24 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Bean from '@paobu/core/components/Bean.astro';
 import Icon from '@paobu/core/components/Icon.astro';
 import SearchField from '@paobu/core/components/SearchField.astro';
 import { t, type Locale, LOCALES } from '@paobu/core/lib/i18n';
@@ -59,7 +60,7 @@ const copy = locale === 'zh-CN'
 
 <BaseLayout
   locale={locale}
-  title={`${copy.title} · RunMap`}
+  title={`${copy.title} · RUNUP`}
   description={copy.intro}
   active="tools"
   preview={content.preview}
@@ -73,6 +74,7 @@ const copy = locale === 'zh-CN'
         <p class="tools-intro">{copy.intro}</p>
       </div>
       <div class="tools-search">
+        <Bean expression="tool" size={104} className="hero-mascot" label={locale === 'zh-CN' ? '豆客在算一算' : 'Douke doing the maths'} />
         <SearchField
           locale={locale}
           action={`${prefix}/search/`}
@@ -206,7 +208,15 @@ const copy = locale === 'zh-CN'
   }
 
   .tools-search {
+    display: grid;
+    justify-items: end;
+    gap: 12px;
     padding-bottom: 6px;
+  }
+
+  .hero-mascot {
+    width: 104px;
+    height: 104px;
   }
 
   .trust-strip {
@@ -314,6 +324,15 @@ const copy = locale === 'zh-CN'
     .tools-hero {
       grid-template-columns: 1fr;
       gap: 20px;
+    }
+
+    .tools-search {
+      justify-items: start;
+    }
+
+    .hero-mascot {
+      width: 84px;
+      height: 84px;
     }
   }
 

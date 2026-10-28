@@ -1,4 +1,4 @@
-# 跑地图工具站 · site-tools
+# 跑起来工具站 · site-tools
 
 [English](README.en.md) · 中文
 
@@ -18,7 +18,7 @@
 - `output: 'static'`、尾斜杠目录输出，规范域名为 `https://tools.paobu.org`。
 - 计算不依赖后端：纯算术在客户端函数中执行；GPX/GeoJSON 解析、测地距离与简化在 Web Worker 中执行。
 - `fast-xml-parser` 5.11.2，Pagefind 1.5.2。
-- `@paobu/core` 0.2.15，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `8e2645102a7a8ebcabf56db44ceb49c4d16df54478be489919979fb4a72eaeae`。
+- `@paobu/core` 0.2.16，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `8b0e47ba5ba8c724a96697e5c8a9c527fce6faa9df1d11d5c1a5ec1504f680e2`。
 
 ## 工具与代码位置
 

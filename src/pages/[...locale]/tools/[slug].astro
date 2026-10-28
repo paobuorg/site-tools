@@ -6,7 +6,7 @@ import LegalNotice from '@paobu/core/components/LegalNotice.astro';
 import type { RouteDetails } from '@paobu/core/content';
 import { contributorName, otherLocale, type Locale, LOCALES } from '@paobu/core/lib/i18n';
 import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
-import { breadcrumbList } from '@paobu/core/lib/seo';
+import { breadcrumbList, softwareApplicationData } from '@paobu/core/lib/seo';
 import { MAX_FILE_BYTES } from '../../../lib/parse-track';
 import FuelingPlanner from '../../../components/tools/FuelingPlanner.astro';
 import RouteElevation from '../../../components/tools/RouteElevation.astro';
@@ -502,7 +502,15 @@ const clientStrings = {
   suspiciousJumps: locale === 'zh-CN' ? '发现 {count} 处相邻点距离超过 10 公里，可能是断点或异常坐标。' : 'Found {count} point-to-point gaps over 10 km, likely breaks or bad coordinates.',
   multipleSegments: locale === 'zh-CN' ? '文件包含 {count} 个线段；距离分别累计，不把线段端点人为连接。' : 'The file contains {count} segments; distances are summed without joining their endpoints.',
 };
-const title = `${translation.title} · RUNUP`;
+const rawTitle = `${translation.title} · RUNUP`;
+const title =
+  rawTitle.length > 70
+    ? `${translation.title.slice(0, 60).replace(/\s+\S*$/, '')} · RUNUP`
+    : rawTitle;
+const metaDescription =
+  translation.summary.length > 160
+    ? `${translation.summary.slice(0, 157).replace(/\s+\S*$/, '')}…`
+    : translation.summary;
 const pageOrigin = Astro.site ?? Astro.url.origin;
 const pageUrl = new URL(`${prefix}/tools/${entity.slug}/`, pageOrigin).toString();
 const structuredData = [
@@ -511,18 +519,26 @@ const structuredData = [
     { name: copy.tools, url: new URL(`${prefix}/`, pageOrigin).toString() },
     { name: translation.title, url: pageUrl },
   ]),
+  softwareApplicationData({
+    name: translation.title,
+    description: translation.summary,
+    url: pageUrl,
+    locale,
+    version: details.specVersion,
+  }),
 ];
 ---
 
 <BaseLayout
   locale={locale}
   title={title}
-  description={translation.summary}
+  description={metaDescription}
   active="tools"
   preview={content.preview}
   ogType="article"
   alternateHref={`${localePrefix(other)}/tools/${entity.slug}/`}
   structuredData={structuredData}
+  modifiedTime={entity.updatedAt}
   footerAd
 >
   <div class="page-shell">

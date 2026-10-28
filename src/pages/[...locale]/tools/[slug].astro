@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
 import Icon from '@paobu/core/components/Icon.astro';
+import LegalNotice from '@paobu/core/components/LegalNotice.astro';
 import type { RouteDetails } from '@paobu/core/content';
-import { otherLocale, type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { contributorName, otherLocale, type Locale, LOCALES } from '@paobu/core/lib/i18n';
 import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
 import { breadcrumbList } from '@paobu/core/lib/seo';
 import { MAX_FILE_BYTES } from '../../../lib/parse-track';
@@ -39,14 +40,11 @@ const details = toolDetails(entity);
 const sources = content.sourcesFor(entity);
 const related = content.related(entity, locale);
 const cases = content.cases.filter((item) => item.toolId === entity.entityId);
-const reviews = content.reviews.filter(
-  (review) => review.entityId === entity.entityId && review.locale === locale,
-);
 const authors = [
   ...new Set(
     entity.translations
       .flatMap((item) => item.authors)
-      .map((id) => content.contributors.find((person) => person.contributorId === id)?.displayName ?? id),
+      .map((id) => contributorName(id, content.contributors.find((person) => person.contributorId === id)?.displayName ?? id, locale)),
   ),
 ];
 const other = otherLocale(locale);
@@ -87,8 +85,8 @@ const copy = locale === 'zh-CN'
   ? {
       home: '首页',
       tools: '全部工具',
-      preview: '编辑审阅中',
-      previewNote: '这个工具仍在编辑审阅中，公式、文案和边界可能调整。',
+      preview: '校对中',
+      previewNote: '这个工具仍在校对中，公式、文案和边界可能调整。',
       privacy: '本地计算',
       localOnly: '输入只在当前浏览器处理，不上传，不需要账户。',
       input: '输入',
@@ -202,7 +200,7 @@ const copy = locale === 'zh-CN'
       simplifyLimitNote: '单段超过 500 公里、跨日界线或纬度超过 85 度时，首版拒绝简化。这类文件仍可用轨迹查看或转换工具处理。',
       routeCompareFormTitle: '选择已发布赛道版本（2 至 4 个）',
       routeCompareEmpty: '目前没有足够的已发布赛道版本可供比较。',
-      routeCompareEmptyHint: '赛道完成审阅并发布后，这里会显示可勾选的固定版本。编辑审阅中的内容不会参与比较。',
+      routeCompareEmptyHint: '赛道完成核验并发布后，这里会显示可勾选的固定版本。校对中的内容不会参与比较。',
       routeCompareSelectHint: '至少选择 2 个、最多 4 个版本；缺失字段显示为未知，不生成排名。',
       routeCompareButton: '比较所选赛道',
       routeCompareResultTitle: '赛道字段对照',
@@ -239,7 +237,7 @@ const copy = locale === 'zh-CN'
       assumptions: '适用条件',
       rounding: '舍入规则',
       specTitle: '实现规范（英文原文）',
-      specHint: '以下字段用于实现与审阅核对，正文提供中文解释。',
+      specHint: '以下字段用于实现与核验核对，正文提供中文解释。',
       examplesTitle: '独立算例',
       examplesHint: '期望值由独立算术或已核验算法得出，不由页面脚本生成。',
       inputLabel: '输入',
@@ -251,20 +249,20 @@ const copy = locale === 'zh-CN'
       relatedKnowledge: '关联知识',
       relatedRoutes: '关联赛道',
       relatedTools: '关联工具',
-      versionTitle: '版本与审阅',
+      versionTitle: '版本与核验',
       authors: '撰写',
-      noReview: '尚无审阅记录',
-      reviewed: '审阅于',
+      noReview: '尚无核验记录',
+      reviewed: '核验于',
       updated: '更新于',
-      unreviewed: '尚未审阅',
+      unreviewed: '尚未核验',
       back: '返回全部工具',
       notBuilt: '这个工具的计算界面尚未完成，本页只公开规范与算例。',
     }
   : {
       home: 'Home',
       tools: 'All tools',
-      preview: 'In editorial review',
-      previewNote: 'This tool is still in editorial review; its formula, wording and limits may change.',
+      preview: 'Being checked',
+      previewNote: 'This tool is still being checked; its formula, wording and limits may change.',
       privacy: 'Local calculation',
       localOnly: 'Inputs are processed in this browser only. Nothing is uploaded and no account is needed.',
       input: 'Input',
@@ -427,12 +425,12 @@ const copy = locale === 'zh-CN'
       relatedKnowledge: 'Related knowledge',
       relatedRoutes: 'Related routes',
       relatedTools: 'Related tools',
-      versionTitle: 'Version and review',
+      versionTitle: 'Version and checks',
       authors: 'Written by',
-      noReview: 'No review record yet',
-      reviewed: 'Reviewed',
+      noReview: 'No check record yet',
+      reviewed: 'Checked',
       updated: 'Updated',
-      unreviewed: 'Not yet reviewed',
+      unreviewed: 'Not yet checked',
       back: 'Back to all tools',
       notBuilt: 'The calculator interface for this tool is not built yet; only its specification and examples are published.',
     };
@@ -1215,7 +1213,7 @@ const structuredData = [
         <h2 id="method-heading">{copy.versionTitle}</h2>
         <p>{copy.authors}: {authors.join(', ')}</p>
         <p>{copy.updated}: {formatDate(entity.updatedAt, locale)}</p>
-        <p>{copy.reviewed}: {formatDate(entity.reviewedAt, locale)} · {reviews.length ? (locale === 'zh-CN' ? `${reviews.length} 条审阅记录` : `${reviews.length} review record(s)`) : copy.noReview}</p>
+        <p>{copy.reviewed}: {formatDate(entity.reviewedAt, locale)}</p>
       </section>
 
       {relatedTools.length > 0 && (
@@ -1231,6 +1229,8 @@ const structuredData = [
           </div>
         </div>
       )}
+
+      <LegalNotice locale={locale} context="tool" />
 
       <p class="tool-back"><a href={`${prefix}/`}><Icon name="arrow-left" size={15} />{copy.back}</a></p>
     </div>

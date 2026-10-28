@@ -1,0 +1,13 @@
+---
+import LegalPage from '@paobu/core/components/LegalPage.astro';
+import { LOCALES, type Locale } from '@paobu/core/lib/i18n';
+import { localeStaticParam } from '@paobu/core/lib/routing';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale: localeStaticParam(locale) }, props: { locale } }));
+}
+
+const locale = Astro.props.locale as Locale;
+---
+
+<LegalPage locale={locale} active="tools" />

@@ -9,8 +9,8 @@
 - 工具站已部署到 GitHub Pages，线上地址为 `https://tools.paobu.org/`；Pages 与 HTTPS 已启用。
 - 十二项工具已于 2026-10-28 完成 **AI 辅助编辑审阅**并发布；每项有双语 `approve` 记录和匹配 contentDigest。审阅身份明确标注为 AI 辅助，不是独立专业审阅；限制见 site-www 的 [ai-review-report.md](../site-www/evidence/2026-10-28/review/ai-review-report.md)。
 - 路线比较只读取已发布路线；当前 16 条路线已发布，因此比较页有真实可选记录。
-- 本地发布准备已建立：生产构建会生成 `CNAME`、`.nojekyll`、`robots.txt`、`sitemap.xml`、`release-manifest.json`、PWA manifest、`sw.js` 与离线页；`.github/workflows/pages.yml` 已成功部署，`https://tools.paobu.org/` 已启用 HTTPS。当前 56 实体生产构建中，工具站有 30 个静态页面、发布清单 26 页、Pagefind 24 条记录、sitemap 26 个 URL；生产工具可见 12 项，`pnpm check:production` 通过。
-- T12 的轨迹慢提示、30 秒超时与取消状态已在 `site-www` 的 `pnpm qa:track` 中通过；它用挂起 Worker 和缩短计时器模拟，不代表真实低端设备的处理速度。T1 新工具的浏览器检查与 38 项单元测试通过；T1 批次已于 2026-10-28 推送并完成 Pages 复核，线上工具与本地构建一致。
+- 本地发布准备已建立：生产构建会生成 `CNAME`、`.nojekyll`、`robots.txt`、`sitemap.xml`、`release-manifest.json`、PWA manifest、`sw.js` 与离线页；`.github/workflows/pages.yml` 已成功部署，`https://tools.paobu.org/` 已启用 HTTPS。当前 56 实体生产构建中，工具站有 32 个静态页面、发布清单 28 页、Pagefind 24 条记录、sitemap 28 个 URL；生产工具可见 12 项，`pnpm check:production` 通过。
+- T12 的轨迹慢提示、30 秒超时与取消状态已在 `site-www` 的 `pnpm qa:track` 中通过；它用挂起 Worker 和缩短计时器模拟，不代表真实低端设备的处理速度。T1 新工具的浏览器检查与 38 项单元测试通过；T1 批次与法律/文风更新已于 2026-10-28 完成；工具站新增中英文 `/legal/` 页面，工具页显示估算与本地文件法律提示。
 
 ## 技术基线
 
@@ -18,7 +18,7 @@
 - `output: 'static'`、尾斜杠目录输出，规范域名为 `https://tools.paobu.org`。
 - 计算不依赖后端：纯算术在客户端函数中执行；GPX/GeoJSON 解析、测地距离与简化在 Web Worker 中执行。
 - `fast-xml-parser` 5.11.2，Pagefind 1.5.2。
-- `@paobu/core` 0.2.14，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `1fcda15d29b7e1de0240ea8b6061f92fc8dc7887a2469c85a3011584bd2bcd89`。
+- `@paobu/core` 0.2.15，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `8e2645102a7a8ebcabf56db44ceb49c4d16df54478be489919979fb4a72eaeae`。
 
 ## 工具与代码位置
 

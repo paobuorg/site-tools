@@ -61,7 +61,7 @@ export function entityHref(entity: ContentEntity, locale: Locale): string {
 }
 
 export function formatDate(value: string | null, locale: Locale): string {
-  if (!value) return locale === 'zh-CN' ? '尚未审阅' : 'Not yet reviewed';
+  if (!value) return locale === 'zh-CN' ? '尚未核验' : 'Not yet checked';
   return new Intl.DateTimeFormat(locale === 'zh-CN' ? 'zh-CN' : 'en-GB', {
     year: 'numeric',
     month: 'short',

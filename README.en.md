@@ -9,8 +9,8 @@ The site project for `tools.paobu.org`: pace, splits, run-walk, race prediction,
 - The tools site is deployed on GitHub Pages at `https://tools.paobu.org/`; Pages and HTTPS are enabled.
 - All twelve tools were **AI-assisted editorially reviewed** and published on 2026-10-28; each has bilingual `approve` records and matching contentDigests. The reviewer is explicitly labelled AI-assisted, not independent professional review; limitations are in [ai-review-report.md](../site-www/evidence/2026-10-28/review/ai-review-report.md).
 - Route comparison reads published routes only. Sixteen routes are currently published, so the page has real selectable records.
-- Local release preparation exists: production builds emit `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`, `release-manifest.json`, the PWA manifest, `sw.js` and an offline page. The Pages workflow has deployed successfully and `https://tools.paobu.org/` enforces HTTPS. In the current 56-entity production build the tools site has 30 static pages, 26 manifest pages, 24 Pagefind records and 26 sitemap URLs. Production shows 12 tools and `pnpm check:production` passes.
-- The T12 slow hint, 30s timeout and cancel state pass in `site-www` via `pnpm qa:track`; the check uses a hanging Worker and shortened timers, not a physical low-end device. Browser checks and 38 unit tests cover the new T1 tools; the T1 batch was pushed and verified on Pages on 2026-10-28, and the live tools match the local build.
+- Local release preparation exists: production builds emit `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`, `release-manifest.json`, the PWA manifest, `sw.js` and an offline page. The Pages workflow has deployed successfully and `https://tools.paobu.org/` enforces HTTPS. In the current 56-entity production build the tools site has 32 static pages, 28 manifest pages, 24 Pagefind records and 28 sitemap URLs. Production shows 12 tools and `pnpm check:production` passes.
+- The T12 slow hint, 30s timeout and cancel state pass in `site-www` via `pnpm qa:track`; the check uses a hanging Worker and shortened timers, not a physical low-end device. Browser checks and 38 unit tests cover the new T1 tools; the T1 batch and the legal/tone update were completed on 2026-10-28; the tools site now has bilingual `/legal/` pages and tool-level estimate/local-file legal notices.
 
 ## Technical baseline
 
@@ -18,7 +18,7 @@ The site project for `tools.paobu.org`: pace, splits, run-walk, race prediction,
 - `output: 'static'` with directory-style trailing slashes; canonical origin `https://tools.paobu.org`.
 - No backend is needed for calculation: arithmetic runs in client functions; GPX/GeoJSON parsing, geodesic distance and simplification run in Web Workers.
 - `fast-xml-parser` 5.11.2, Pagefind 1.5.2.
-- `@paobu/core` 0.2.14, installed from `vendor/paobu-core.tgz`; `core.lock.json` records artifact SHA-256 `1fcda15d29b7e1de0240ea8b6061f92fc8dc7887a2469c85a3011584bd2bcd89`.
+- `@paobu/core` 0.2.15, installed from `vendor/paobu-core.tgz`; `core.lock.json` records artifact SHA-256 `8e2645102a7a8ebcabf56db44ceb49c4d16df54478be489919979fb4a72eaeae`.
 
 ## Tools and code locations
 

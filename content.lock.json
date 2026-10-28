@@ -8,7 +8,7 @@
     "data",
     "assets"
   ],
-  "generatedAt": "2026-10-28T02:31:55.226Z",
+  "generatedAt": "2026-10-28T03:36:45.284Z",
   "repositories": [
     {
       "name": "running-routes",
@@ -18,9 +18,9 @@
     },
     {
       "name": "running-knowledge",
-      "commit": "17e2e6d303e97ae5643ce864845a51b9261c08fa",
-      "digest": "3560dc68d9e316e31250d4f4a5f67c45f3c996343296711951a55b8ea58009d3",
-      "fileCount": 218
+      "commit": "ac0e780c67288b285546a4e1158e8e543fa731ef",
+      "digest": "740a3427df95bdcdef58b6ee77899c973ac2e56fe1eb782a13f023c018f941b8",
+      "fileCount": 255
     },
     {
       "name": "running-tools",

@@ -92,7 +92,7 @@ The `sha256-tree-v1` lock covers `content/`, `data/` and `assets/` in all three 
 
 - The tools work locally in the browser and need no server runtime, database or third-party calculation API.
 - Cross-site links use `PUBLIC_ROUTES_ORIGIN`, `PUBLIC_KNOWLEDGE_ORIGIN` and `PUBLIC_TOOLS_ORIGIN`; production defaults live in the core and the local `.env` points to the three local ports.
-- GitHub repositories, DNS and Pages are configured: the six repositories live under `paobuorg`, and all three sites are live on custom domains with HTTPS. This workflow uses the `PAOBU_CORE_ARTIFACT_URL` and `PAOBU_CORE_SHA256` repository variables. The T1 live tools are verified; evidence is in the site-www [remote-status.json](../site-www/evidence/2026-10-28/release/remote-status.json).
+- GitHub repositories, DNS and Pages are configured: the six repositories live under `paobuorg`, and all three sites are live on custom domains with HTTPS. This workflow uses the `PAOBU_CORE_ARTIFACT_URL` and `PAOBU_CORE_SHA256` repository variables. The brand/Douke release is verified live on the tools home and detail pages; evidence is in the site-www [remote-status.json](../site-www/evidence/2026-10-28/release/remote-status.json).
 
 ## Licence
 

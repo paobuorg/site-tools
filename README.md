@@ -92,7 +92,7 @@ node scripts/content-lock.mjs --verify # 校验内容树未变化
 
 - 工具在浏览器本地工作，不需要服务端运行时、数据库或第三方计算 API。
 - 跨子域链接使用 `PUBLIC_ROUTES_ORIGIN`、`PUBLIC_KNOWLEDGE_ORIGIN` 与 `PUBLIC_TOOLS_ORIGIN`；生产默认值在核心中，本地 `.env` 指向三个本地端口。
-- GitHub 仓库、DNS 与 Pages 已配置：六个仓库位于 `paobuorg`，三站 Pages 已上线并启用 HTTPS。本仓库工作流使用 `PAOBU_CORE_ARTIFACT_URL`、`PAOBU_CORE_SHA256` 仓库变量；T1 批次线上工具已验证，证据见 site-www 的 [remote-status.json](../site-www/evidence/2026-10-28/release/remote-status.json)。
+- GitHub 仓库、DNS 与 Pages 已配置：六个仓库位于 `paobuorg`，三站 Pages 已上线并启用 HTTPS。本仓库工作流使用 `PAOBU_CORE_ARTIFACT_URL`、`PAOBU_CORE_SHA256` 仓库变量；品牌/豆客批次线上工具站与详情页已验证，证据见 site-www 的 [remote-status.json](../site-www/evidence/2026-10-28/release/remote-status.json)。
 
 ## 许可
 

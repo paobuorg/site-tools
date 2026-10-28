@@ -10,7 +10,7 @@ The site project for `tools.paobu.org`: pace, splits, run-walk, race prediction,
 - All twelve tools were **AI-assisted editorially reviewed** and published on 2026-10-28; each has bilingual `approve` records and matching contentDigests. The reviewer is explicitly labelled AI-assisted, not independent professional review; limitations are in [ai-review-report.md](../site-www/evidence/2026-10-28/review/ai-review-report.md).
 - Route comparison reads published routes only. Sixteen routes are currently published, so the page has real selectable records.
 - Local release preparation exists: production builds emit `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`, `release-manifest.json`, the PWA manifest, `sw.js` and an offline page. The Pages workflow has deployed successfully and `https://tools.paobu.org/` enforces HTTPS. In the current 56-entity production build the tools site has 30 static pages, 26 manifest pages, 24 Pagefind records and 26 sitemap URLs. Production shows 12 tools and `pnpm check:production` passes.
-- The T12 slow hint, 30s timeout and cancel state pass in `site-www` via `pnpm qa:track`; the check uses a hanging Worker and shortened timers, not a physical low-end device. Browser checks and 38 unit tests cover the new T1 tools; push and Pages verification for the K1/T1 batch are recorded in the site-www release evidence.
+- The T12 slow hint, 30s timeout and cancel state pass in `site-www` via `pnpm qa:track`; the check uses a hanging Worker and shortened timers, not a physical low-end device. Browser checks and 38 unit tests cover the new T1 tools; the T1 batch was pushed and verified on Pages on 2026-10-28, and the live tools match the local build.
 
 ## Technical baseline
 
@@ -92,7 +92,7 @@ The `sha256-tree-v1` lock covers `content/`, `data/` and `assets/` in all three 
 
 - The tools work locally in the browser and need no server runtime, database or third-party calculation API.
 - Cross-site links use `PUBLIC_ROUTES_ORIGIN`, `PUBLIC_KNOWLEDGE_ORIGIN` and `PUBLIC_TOOLS_ORIGIN`; production defaults live in the core and the local `.env` points to the three local ports.
-- GitHub repositories, DNS and Pages are configured: the six repositories live under `paobuorg`, and all three sites are live on custom domains with HTTPS. This workflow uses the `PAOBU_CORE_ARTIFACT_URL` and `PAOBU_CORE_SHA256` repository variables. The T1 push still needs live-tool verification before the local build is described as deployed.
+- GitHub repositories, DNS and Pages are configured: the six repositories live under `paobuorg`, and all three sites are live on custom domains with HTTPS. This workflow uses the `PAOBU_CORE_ARTIFACT_URL` and `PAOBU_CORE_SHA256` repository variables. The T1 live tools are verified; evidence is in the site-www [remote-status.json](../site-www/evidence/2026-10-28/release/remote-status.json).
 
 ## Licence
 

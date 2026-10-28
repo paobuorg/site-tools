@@ -1,0 +1,131 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+import { MAX_FILE_BYTES } from '../../lib/parse-track';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '读取高程剖面',
+      intro: '选择一个 GPX 或 GeoJSON 文件。文件只在当前浏览器读取，不上传。',
+      file: '轨迹文件',
+      fileHint: '支持 GPX 与 GeoJSON；高程缺失时不会按 0 计算。',
+      analyze: '分析高程',
+      cancel: '取消',
+      distance: '距离',
+      gain: '累计爬升',
+      loss: '累计下降',
+      min: '最低海拔',
+      max: '最高海拔',
+      grade: '最大坡度',
+      chart: '高程剖面',
+      ready: '选择文件后开始分析。',
+      processing: '正在本地解析文件…',
+      done: '完成。',
+      cancelled: '已取消。',
+      genericError: '无法处理这个文件。',
+      tooLarge: '文件超过 20 MB，已拒绝。',
+      missing: '文件没有高程数据；累计爬升、下降和剖面显示为未知。',
+      partial: '部分点缺少高程；累计爬升、下降和剖面显示为未知，避免低估。',
+      note: '高程来自文件本身；GPS 高程会漂移，不能把点对坡度当作道路设计坡度或路线安全认证。',
+    }
+  : {
+      title: 'Read the elevation profile',
+      intro: 'Choose a GPX or GeoJSON file. It is read in this browser only and is never uploaded.',
+      file: 'Track file',
+      fileHint: 'GPX and GeoJSON supported; missing elevation is not treated as zero.',
+      analyze: 'Analyse elevation',
+      cancel: 'Cancel',
+      distance: 'Distance',
+      gain: 'Elevation gain',
+      loss: 'Elevation loss',
+      min: 'Minimum elevation',
+      max: 'Maximum elevation',
+      grade: 'Maximum grade',
+      chart: 'Elevation profile',
+      ready: 'Choose a file, then analyse it.',
+      processing: 'Parsing the file locally…',
+      done: 'Done.',
+      cancelled: 'Cancelled.',
+      genericError: 'The file could not be processed.',
+      tooLarge: 'The file exceeds 20 MB and was rejected.',
+      missing: 'The file has no elevation values; gain, loss and profile are unknown.',
+      partial: 'Some points lack elevation; gain, loss and profile are unknown to avoid undercounting.',
+      note: 'Elevation comes from the file. GPS elevation drifts; a point-pair grade is not a road-design grade or a route-safety certification.',
+    };
+---
+
+<div
+  class="elevation-tool"
+  data-route-elevation
+  data-locale={locale}
+  data-max-file-bytes={MAX_FILE_BYTES}
+  data-status-ready={copy.ready}
+  data-status-processing={copy.processing}
+  data-status-done={copy.done}
+  data-status-cancelled={copy.cancelled}
+  data-error-generic={copy.genericError}
+  data-error-too-large={copy.tooLarge}
+  data-warning-missing={copy.missing}
+  data-warning-partial={copy.partial}
+>
+  <h2>{copy.title}</h2>
+  <p class="elevation-intro">{copy.intro}</p>
+  <div class="field">
+    <label for="elevation-file">{copy.file}</label>
+    <input id="elevation-file" data-elevation-file type="file" accept=".gpx,.geojson,application/gpx+xml,application/geo+json" />
+    <p class="field-hint">{copy.fileHint}</p>
+  </div>
+  <div class="elevation-actions">
+    <button class="button primary" type="button" data-elevation-run><Icon name="ruler" size={17} />{copy.analyze}</button>
+    <button class="button ghost" type="button" data-elevation-cancel hidden>{copy.cancel}</button>
+  </div>
+  <p class="elevation-status" role="status" data-elevation-status>{copy.ready}</p>
+  <div class="elevation-error" data-elevation-error hidden>
+    <p data-elevation-error-text></p>
+  </div>
+  <div class="elevation-result" data-elevation-result hidden>
+    <dl class="elevation-stats">
+      <div><dt>{copy.distance}</dt><dd data-elevation-distance>—</dd></div>
+      <div><dt>{copy.gain}</dt><dd data-elevation-gain>—</dd></div>
+      <div><dt>{copy.loss}</dt><dd data-elevation-loss>—</dd></div>
+      <div><dt>{copy.min}</dt><dd data-elevation-min>—</dd></div>
+      <div><dt>{copy.max}</dt><dd data-elevation-max>—</dd></div>
+      <div><dt>{copy.grade}</dt><dd data-elevation-grade>—</dd></div>
+    </dl>
+    <div class="elevation-chart-wrap">
+      <h3>{copy.chart}</h3>
+      <svg data-elevation-chart viewBox="0 0 600 180" role="img" aria-label={copy.chart} preserveAspectRatio="none">
+        <polyline data-elevation-line fill="none" stroke="currentColor" stroke-width="2" points=""></polyline>
+      </svg>
+    </div>
+    <p class="elevation-warning" data-elevation-warning hidden></p>
+    <p class="elevation-note">{copy.note}</p>
+  </div>
+</div>
+
+<style>
+  .elevation-tool { display: grid; gap: 16px; }
+  .elevation-tool h2 { margin: 0; font-size: 1.25rem; }
+  .elevation-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .elevation-tool .field { display: grid; gap: 6px; }
+  .elevation-tool label { font-weight: 700; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .elevation-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .elevation-status { margin: 0; color: var(--muted); font-size: .88rem; }
+  .elevation-error { padding: 12px 14px; border-radius: 12px; background: #fff1f0; color: #8a1c1c; }
+  .elevation-error p { margin: 0; }
+  .elevation-result { display: grid; gap: 16px; border-top: 1px solid var(--border); padding-top: 18px; }
+  .elevation-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+  .elevation-stats > div { padding: 12px; border-radius: 12px; background: var(--surface-soft, rgba(8,184,157,.06)); }
+  .elevation-stats dt { color: var(--muted); font-size: .8rem; }
+  .elevation-stats dd { margin: 4px 0 0; font-weight: 700; }
+  .elevation-chart-wrap h3 { margin: 0 0 8px; font-size: .9rem; }
+  .elevation-chart-wrap svg { width: 100%; height: 180px; color: #2e70f6; background: var(--surface-soft, rgba(46,112,246,.05)); border-radius: 12px; }
+  .elevation-warning { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .elevation-note { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .elevation-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>

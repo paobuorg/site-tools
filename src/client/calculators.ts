@@ -15,6 +15,10 @@ import {
 import { trackMimeType, trackOutputFileName } from '../lib/serialize-track';
 import type { TrackFormat } from '../lib/parse-track';
 import { compareRoutes, type ComparableRoute, type ComparisonKey } from '../lib/route-compare';
+import { initFueling } from './fueling';
+import { initRouteElevation } from './route-elevation';
+import { initShoeMileage } from './shoe-mileage';
+import { initRaceChecklist } from './race-checklist';
 
 type Locale = 'zh-CN' | 'en';
 type PaceMode = 'distance-time' | 'distance-pace' | 'time-pace';
@@ -1348,4 +1352,12 @@ export function initCalculators() {
   if (simplify) initTrackTransform(simplify);
   const routeCompare = document.querySelector<HTMLElement>('[data-tool="route-compare"]');
   if (routeCompare) initRouteCompare(routeCompare);
+  const fueling = document.querySelector<HTMLElement>('[data-fueling]');
+  if (fueling) initFueling(fueling);
+  const elevation = document.querySelector<HTMLElement>('[data-route-elevation]');
+  if (elevation) initRouteElevation(elevation);
+  const shoeMileage = document.querySelector<HTMLElement>('[data-shoe-mileage]');
+  if (shoeMileage) initShoeMileage(shoeMileage);
+  const raceChecklist = document.querySelector<HTMLElement>('[data-race-checklist]');
+  if (raceChecklist) initRaceChecklist(raceChecklist);
 }

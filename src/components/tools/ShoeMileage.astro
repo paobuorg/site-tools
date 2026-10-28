@@ -1,0 +1,163 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '记录跑鞋使用量',
+      intro: '添加跑鞋和跑步距离，工具在本地汇总里程。提醒里程由你设置，不是统一寿命。',
+      addShoe: '添加跑鞋',
+      shoeName: '跑鞋名称',
+      shoeNamePlaceholder: '例如：日常训练鞋',
+      initial: '已有里程（公里）',
+      reminder: '提醒里程（公里）',
+      add: '添加跑鞋',
+      addRun: '记录一次跑步',
+      selectShoe: '选择跑鞋',
+      date: '日期',
+      distance: '距离（公里）',
+      saveRun: '记录',
+      empty: '还没有跑鞋记录。先添加一双鞋。',
+      clear: '清空本地记录',
+      total: '累计里程',
+      runs: '记录次数',
+      remaining: '距提醒里程',
+      progress: '提醒进度',
+      lastRun: '最近记录',
+      deleteShoe: '删除',
+      overReminder: '已达到提醒里程，检查鞋况而不是自动丢弃。',
+      confirmDelete: '删除这双鞋及其跑步记录？',
+      confirmClear: '清空全部本地跑鞋和跑步记录？',
+      nameError: '请输入跑鞋名称。',
+      initialError: '已有里程必须是 0 或更大。',
+      reminderError: '提醒里程必须大于 0。',
+      runShoeError: '请选择跑鞋。',
+      dateError: '请使用 YYYY-MM-DD 日期。',
+      distanceError: '距离必须大于 0。',
+      privacy: '数据只保存在当前浏览器，不上传。',
+    }
+  : {
+      title: 'Record shoe mileage',
+      intro: 'Add shoes and run distances; the tool totals mileage locally. The reminder is your own setting, not a universal lifespan.',
+      addShoe: 'Add a shoe',
+      shoeName: 'Shoe name',
+      shoeNamePlaceholder: 'e.g. daily trainer',
+      initial: 'Existing distance (km)',
+      reminder: 'Reminder distance (km)',
+      add: 'Add shoe',
+      addRun: 'Log a run',
+      selectShoe: 'Choose a shoe',
+      date: 'Date',
+      distance: 'Distance (km)',
+      saveRun: 'Log run',
+      empty: 'No shoes yet. Add a pair first.',
+      clear: 'Clear local records',
+      total: 'Total mileage',
+      runs: 'Logged runs',
+      remaining: 'Distance to reminder',
+      progress: 'Reminder progress',
+      lastRun: 'Last logged',
+      deleteShoe: 'Delete',
+      overReminder: 'The reminder distance is reached; inspect the shoe rather than discarding it automatically.',
+      confirmDelete: 'Delete this shoe and its runs?',
+      confirmClear: 'Clear all local shoes and runs?',
+      nameError: 'Enter a shoe name.',
+      initialError: 'Existing distance must be zero or greater.',
+      reminderError: 'Reminder distance must be greater than zero.',
+      runShoeError: 'Choose a shoe.',
+      dateError: 'Use a YYYY-MM-DD date.',
+      distanceError: 'Distance must be greater than zero.',
+      privacy: 'Data stays in this browser and is not uploaded.',
+    };
+const strings = {
+  total: copy.total,
+  runs: copy.runs,
+  remaining: copy.remaining,
+  progress: copy.progress,
+  lastRun: copy.lastRun,
+  deleteShoe: copy.deleteShoe,
+  empty: copy.empty,
+  overReminder: copy.overReminder,
+  confirmDelete: copy.confirmDelete,
+  confirmClear: copy.confirmClear,
+};
+---
+
+<div class="shoe-tool" data-shoe-mileage data-locale={locale} data-strings={JSON.stringify(strings)}>
+  <h2>{copy.title}</h2>
+  <p class="shoe-intro">{copy.intro}</p>
+  <form class="shoe-form" data-shoe-form novalidate>
+    <h3>{copy.addShoe}</h3>
+    <div class="shoe-form-grid">
+      <div class="field">
+        <label for="shoe-name">{copy.shoeName}</label>
+        <input id="shoe-name" data-shoe-name type="text" maxlength="60" placeholder={copy.shoeNamePlaceholder} />
+      </div>
+      <div class="field">
+        <label for="shoe-initial">{copy.initial}</label>
+        <input id="shoe-initial" data-shoe-initial type="number" min="0" step="0.1" value="0" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label for="shoe-reminder">{copy.reminder}</label>
+        <input id="shoe-reminder" data-shoe-reminder type="number" min="0.1" step="0.1" value="600" inputmode="decimal" />
+      </div>
+    </div>
+    <p class="field-error" data-shoe-error hidden>{copy.nameError}</p>
+    <button class="button primary" type="submit"><Icon name="shoe" size={17} />{copy.add}</button>
+  </form>
+  <form class="shoe-form" data-run-form novalidate>
+    <h3>{copy.addRun}</h3>
+    <div class="shoe-form-grid">
+      <div class="field">
+        <label for="run-shoe">{copy.selectShoe}</label>
+        <select id="run-shoe" data-run-shoe></select>
+      </div>
+      <div class="field">
+        <label for="run-date">{copy.date}</label>
+        <input id="run-date" data-run-date type="date" />
+      </div>
+      <div class="field">
+        <label for="run-distance">{copy.distance}</label>
+        <input id="run-distance" data-run-distance type="number" min="0.1" step="0.1" inputmode="decimal" />
+      </div>
+    </div>
+    <p class="field-error" data-run-error hidden>{copy.distanceError}</p>
+    <button class="button primary" type="submit"><Icon name="plus" size={17} />{copy.saveRun}</button>
+  </form>
+  <p class="shoe-empty" data-shoe-empty>{copy.empty}</p>
+  <div class="shoe-list" data-shoe-list></div>
+  <div class="shoe-footer">
+    <p>{copy.privacy}</p>
+    <button class="button ghost small" type="button" data-shoe-clear>{copy.clear}</button>
+  </div>
+</div>
+
+<style>
+  .shoe-tool { display: grid; gap: 18px; }
+  .shoe-tool h2 { margin: 0; font-size: 1.25rem; }
+  .shoe-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .shoe-form { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 14px; }
+  .shoe-form h3 { margin: 0; font-size: .98rem; }
+  .shoe-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .shoe-form .field { display: grid; gap: 5px; }
+  .shoe-form label { font-weight: 700; font-size: .86rem; }
+  .shoe-form input, .shoe-form select { width: 100%; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .shoe-empty { margin: 0; padding: 16px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); color: var(--muted); }
+  .shoe-list { display: grid; gap: 12px; }
+  .shoe-card { padding: 16px; border: 1px solid var(--border); border-radius: 14px; display: grid; gap: 10px; }
+  .shoe-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .shoe-card h3 { margin: 0; font-size: 1rem; }
+  .shoe-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+  .shoe-stats dt { color: var(--muted); font-size: .78rem; }
+  .shoe-stats dd { margin: 3px 0 0; font-weight: 700; }
+  .shoe-card progress { width: 100%; }
+  .shoe-progress-text { margin: 0; color: var(--muted); font-size: .84rem; }
+  .shoe-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .shoe-footer p { margin: 0; color: var(--muted); font-size: .82rem; }
+  @media (max-width: 720px) { .shoe-form-grid { grid-template-columns: 1fr; } .shoe-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>

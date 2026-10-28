@@ -6,6 +6,10 @@ import { otherLocale, type Locale, LOCALES } from '@paobu/core/lib/i18n';
 import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
 import { breadcrumbList } from '@paobu/core/lib/seo';
 import { MAX_FILE_BYTES } from '../../../lib/parse-track';
+import FuelingPlanner from '../../../components/tools/FuelingPlanner.astro';
+import RouteElevation from '../../../components/tools/RouteElevation.astro';
+import ShoeMileage from '../../../components/tools/ShoeMileage.astro';
+import RaceChecklist from '../../../components/tools/RaceChecklist.astro';
 import { siteContent } from '../../../lib/content';
 import {
   entityHref,
@@ -55,6 +59,10 @@ const activeTool = [
   'track-convert',
   'track-simplify',
   'route-compare',
+  'fueling-planner',
+  'route-elevation',
+  'shoe-mileage',
+  'race-checklist',
 ].includes(entity.slug);
 const publishedRoutes = content.allEntities
   .filter((item) => item.kind === 'route' && item.status === 'published')
@@ -1098,6 +1106,11 @@ const structuredData = [
             </div>
           </>
         )}
+
+        {entity.slug === 'fueling-planner' && <FuelingPlanner locale={locale} />}
+        {entity.slug === 'route-elevation' && <RouteElevation locale={locale} />}
+        {entity.slug === 'shoe-mileage' && <ShoeMileage locale={locale} />}
+        {entity.slug === 'race-checklist' && <RaceChecklist locale={locale} />}
 
         {!activeTool && (
           <div class="empty-state">

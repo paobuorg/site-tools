@@ -1,0 +1,98 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '按小时估算补给',
+      intro: '输入预计时长和每份补给的碳水克数。结果给出 30–60 克/小时的规划范围，不计算补液量。',
+      duration: '预计时长（分钟）',
+      durationHint: '10–1440 分钟。少于 60 分钟不自动增加碳水。',
+      product: '每份补给碳水（克）',
+      productHint: '看包装标签；默认按一份 25 克估算。',
+      submit: '估算补给',
+      range: '总碳水范围',
+      rate: '每小时碳水',
+      total: '总量',
+      servings: '约需份数',
+      schedule: '建议分发',
+      scheduleValue: '每 20–30 分钟少量摄入',
+      short: '少于 60 分钟：通常不需要额外碳水；如空腹或高强度训练，按个人经验少量测试。',
+      note: '这是规划范围，不是个体处方。先在训练中测试产品、浓度和节奏；补水、钠和医疗问题另行处理。',
+      durationError: '请输入 10 到 1440 分钟之间的时长。',
+      productError: '请输入 5 到 100 克之间的每份碳水。',
+    }
+  : {
+      title: 'Estimate fuel by hour',
+      intro: 'Enter planned duration and carbohydrate per serving. The result gives a 30–60 g/h planning range and does not calculate fluid.',
+      duration: 'Planned duration (minutes)',
+      durationHint: '10–1440 minutes. Sessions under 60 minutes do not automatically add carbohydrate.',
+      product: 'Carbohydrate per serving (grams)',
+      productHint: 'Use the label; the default assumes 25 g per serving.',
+      submit: 'Estimate fuel',
+      range: 'Total carbohydrate range',
+      rate: 'Carbohydrate per hour',
+      total: 'Total',
+      servings: 'Approximate servings',
+      schedule: 'Suggested distribution',
+      scheduleValue: 'A small amount every 20–30 minutes',
+      short: 'Under 60 minutes: extra carbohydrate is usually unnecessary; if fasted or training hard, test a small amount based on your own experience.',
+      note: 'This is a planning range, not an individual prescription. Test products, concentration and timing in training; handle fluid, sodium and medical issues separately.',
+      durationError: 'Enter a duration between 10 and 1440 minutes.',
+      productError: 'Enter carbohydrate per serving between 5 and 100 grams.',
+    };
+---
+
+<div class="fuel-tool" data-fueling data-locale={locale}>
+  <h2>{copy.title}</h2>
+  <p class="fuel-intro">{copy.intro}</p>
+  <form class="fuel-form" data-fueling-form novalidate>
+    <div class="field">
+      <label for="fuel-duration">{copy.duration}</label>
+      <input id="fuel-duration" data-fueling-duration type="number" min="10" max="1440" step="1" value="120" inputmode="numeric" />
+      <p class="field-hint">{copy.durationHint}</p>
+      <p class="field-error" data-error="duration" hidden>{copy.durationError}</p>
+    </div>
+    <div class="field">
+      <label for="fuel-product">{copy.product}</label>
+      <input id="fuel-product" data-fueling-product type="number" min="5" max="100" step="1" value="25" inputmode="numeric" />
+      <p class="field-hint">{copy.productHint}</p>
+      <p class="field-error" data-error="product" hidden>{copy.productError}</p>
+    </div>
+    <button class="button primary" type="submit"><Icon name="drop" size={17} />{copy.submit}</button>
+  </form>
+  <div class="fuel-result" data-fueling-result hidden>
+    <div class="fuel-grid">
+      <div><span>{copy.range}</span><strong data-fueling-total>—</strong></div>
+      <div><span>{copy.rate}</span><strong data-fueling-rate>—</strong></div>
+      <div><span>{copy.servings}</span><strong data-fueling-servings>—</strong></div>
+      <div><span>{copy.schedule}</span><strong>{copy.scheduleValue}</strong></div>
+    </div>
+    <p class="fuel-short" data-fueling-short hidden>{copy.short}</p>
+    <p class="fuel-note">{copy.note}</p>
+  </div>
+</div>
+
+<style>
+  .fuel-tool { display: grid; gap: 18px; }
+  .fuel-tool h2 { margin: 0; font-size: 1.25rem; }
+  .fuel-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .fuel-form { display: grid; gap: 16px; max-width: 480px; }
+  .fuel-form .field { display: grid; gap: 6px; }
+  .fuel-form label { font-weight: 700; }
+  .fuel-form input { width: 100%; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .fuel-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 14px; }
+  .fuel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .fuel-grid > div { padding: 14px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); display: grid; gap: 5px; }
+  .fuel-grid span { color: var(--muted); font-size: .82rem; }
+  .fuel-grid strong { font-size: 1.08rem; }
+  .fuel-short { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .fuel-note { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .fuel-grid { grid-template-columns: 1fr; } }
+</style>

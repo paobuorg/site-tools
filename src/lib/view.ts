@@ -14,6 +14,10 @@ export const TOOL_CATEGORY: Record<string, ToolCategory> = {
   'route-compare': 'track',
   'run-walk': 'pace',
   'race-predict': 'pace',
+  'fueling-planner': 'pace',
+  'route-elevation': 'track',
+  'shoe-mileage': 'track',
+  'race-checklist': 'pace',
 };
 
 export const TOOL_ICON: Record<string, string> = {
@@ -25,6 +29,10 @@ export const TOOL_ICON: Record<string, string> = {
   'route-compare': 'compare',
   'run-walk': 'motion',
   'race-predict': 'chart',
+  'fueling-planner': 'drop',
+  'route-elevation': 'ruler',
+  'shoe-mileage': 'shoe',
+  'race-checklist': 'check',
 };
 
 export function toolDetails(entity: ContentEntity): ToolDetails {

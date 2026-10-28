@@ -16,7 +16,8 @@ const prefix = localePrefix(locale);
 const content = siteContent();
 const tools = content.visible('tool').sort((a, b) => a.slug.localeCompare(b.slug));
 const paceTools = tools.filter((entity) => ['pace', 'splits', 'run-walk', 'race-predict'].includes(entity.slug));
-const trackTools = tools.filter((entity) => ['track-view', 'track-convert', 'track-simplify', 'route-compare'].includes(entity.slug));
+const trackTools = tools.filter((entity) => ['track-view', 'track-convert', 'track-simplify', 'route-compare', 'route-elevation'].includes(entity.slug));
+const planTools = tools.filter((entity) => ['fueling-planner', 'shoe-mileage', 'race-checklist'].includes(entity.slug));
 const copy = locale === 'zh-CN'
   ? {
       title: '跑步工具',
@@ -25,6 +26,7 @@ const copy = locale === 'zh-CN'
       searchPlaceholder: '搜索配速、分段或轨迹工具',
       paceTitle: '配速与分段',
       trackTitle: '轨迹文件',
+      planTitle: '补给、装备与赛前',
       trackHint: '文件只在当前浏览器内读取，不上传；处理在 Worker 中执行。',
       open: '打开工具',
       formula: '公式公开',
@@ -42,6 +44,7 @@ const copy = locale === 'zh-CN'
       searchPlaceholder: 'Search pace, split or track tools',
       paceTitle: 'Pace and splits',
       trackTitle: 'Track files',
+      planTitle: 'Fuel, gear and race day',
       trackHint: 'Files are read in this browser only and are never uploaded; processing runs in a Worker.',
       open: 'Open tool',
       formula: 'Formula published',
@@ -107,6 +110,31 @@ const copy = locale === 'zh-CN'
         })}
       </div>
     </section>
+
+    {planTools.length > 0 && (
+      <section aria-labelledby="plan-heading">
+        <div class="section-heading">
+          <h2 id="plan-heading">{copy.planTitle}</h2>
+        </div>
+        <div class="tool-grid">
+          {planTools.map((entity) => {
+            const translation = content.translation(entity, locale);
+            const details = toolDetails(entity);
+            return (
+              <a class="card tool-card" href={toolHref(entity, locale)}>
+                <span class="tool-card-icon tone-mint" aria-hidden="true"><Icon name={toolIcon(entity.slug)} size={27} /></span>
+                <span class="tool-card-body">
+                  <span class="pill">{details.specVersion}</span>
+                  <h3>{translation.title}</h3>
+                  <p>{translation.summary}</p>
+                  <span class="tool-card-action">{copy.open} <Icon name="arrow-right" size={15} /></span>
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )}
 
     {trackTools.length > 0 && (
       <section aria-labelledby="track-heading">

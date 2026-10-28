@@ -3,7 +3,7 @@
   "short_name": "跑地图工具",
   "description": "在浏览器本地运行的跑步计算与轨迹工具。",
   "lang": "zh-CN",
-  "start_url": "/zh-CN/",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#F6F8F7",

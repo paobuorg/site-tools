@@ -18,7 +18,7 @@ The site project for `tools.paobu.org`: pace, splits, run-walk, race prediction,
 - `output: 'static'` with directory-style trailing slashes; canonical origin `https://tools.paobu.org`.
 - No backend is needed for calculation: arithmetic runs in client functions; GPX/GeoJSON parsing, geodesic distance and simplification run in Web Workers.
 - `fast-xml-parser` 5.11.2, Pagefind 1.5.2.
-- `@paobu/core` 0.2.16, installed from `vendor/paobu-core.tgz`; `core.lock.json` records artifact SHA-256 `8b0e47ba5ba8c724a96697e5c8a9c527fce6faa9df1d11d5c1a5ec1504f680e2`.
+- `@paobu/core` 0.2.18, installed from `vendor/paobu-core.tgz`; `core.lock.json` records artifact SHA-256 `8aa7eed376c59ef91ffe5b2f8da4ed3cdeeee88c919db19e1954ebe2aa0f16f8`.
 
 ## Tools and code locations
 

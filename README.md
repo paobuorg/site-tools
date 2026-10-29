@@ -18,7 +18,7 @@
 - `output: 'static'`、尾斜杠目录输出，规范域名为 `https://tools.paobu.org`。
 - 计算不依赖后端：纯算术在客户端函数中执行；GPX/GeoJSON 解析、测地距离与简化在 Web Worker 中执行。
 - `fast-xml-parser` 5.11.2，Pagefind 1.5.2。
-- `@paobu/core` 0.2.16，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `8b0e47ba5ba8c724a96697e5c8a9c527fce6faa9df1d11d5c1a5ec1504f680e2`。
+- `@paobu/core` 0.2.18，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `8aa7eed376c59ef91ffe5b2f8da4ed3cdeeee88c919db19e1954ebe2aa0f16f8`。
 
 ## 工具与代码位置
 

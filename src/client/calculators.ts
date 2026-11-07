@@ -19,6 +19,12 @@ import { initFueling } from './fueling';
 import { initRouteElevation } from './route-elevation';
 import { initShoeMileage } from './shoe-mileage';
 import { initRaceChecklist } from './race-checklist';
+import { initTrainingLoad } from './training-load';
+import { initHeatAdjust } from './heat-adjust';
+import { initGradeAdjustedPace } from './grade-adjusted-pace';
+import { initCarbLoadPlanner } from './carb-load-planner';
+import { initSweatRate } from './sweat-rate';
+import { initInjuryRiskCheck } from './injury-risk-check';
 
 type Locale = 'zh-CN' | 'en';
 type PaceMode = 'distance-time' | 'distance-pace' | 'time-pace';
@@ -1360,4 +1366,16 @@ export function initCalculators() {
   if (shoeMileage) initShoeMileage(shoeMileage);
   const raceChecklist = document.querySelector<HTMLElement>('[data-race-checklist]');
   if (raceChecklist) initRaceChecklist(raceChecklist);
+  const trainingLoad = document.querySelector<HTMLElement>('[data-training-load]');
+  if (trainingLoad) initTrainingLoad(trainingLoad);
+  const heatAdjust = document.querySelector<HTMLElement>('[data-heat-adjust]');
+  if (heatAdjust) initHeatAdjust(heatAdjust);
+  const gradeAdjustedPace = document.querySelector<HTMLElement>('[data-grade-adjusted-pace]');
+  if (gradeAdjustedPace) initGradeAdjustedPace(gradeAdjustedPace);
+  const carbLoadPlanner = document.querySelector<HTMLElement>('[data-carb-load-planner]');
+  if (carbLoadPlanner) initCarbLoadPlanner(carbLoadPlanner);
+  const sweatRate = document.querySelector<HTMLElement>('[data-sweat-rate]');
+  if (sweatRate) initSweatRate(sweatRate);
+  const injuryRisk = document.querySelector<HTMLElement>('[data-injury-risk]');
+  if (injuryRisk) initInjuryRiskCheck(injuryRisk);
 }

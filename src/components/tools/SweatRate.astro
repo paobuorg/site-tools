@@ -1,0 +1,126 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '出汗率估算',
+      intro: '用运动前后体重和运动中实际喝下的液体量，按 ACSM 的前后称重法估算这一次训练的净失水、每小时出汗率和体重下降百分比。它是一次测量的算术，不是你的固定出汗率，也不是补液处方。',
+      pre: '运动前体重（公斤）',
+      preHint: '30–200。尽量排空、穿相似衣物、用同一台秤。',
+      post: '运动后体重（公斤）',
+      postHint: '30–200。擦干汗、脱掉湿衣后再称，减少误差。',
+      intake: '运动中喝下的液体（升）',
+      intakeHint: '0–10。只算真正喝下的量，不含洒出或留在瓶中的。',
+      duration: '运动时长（分钟）',
+      durationHint: '1–1440。用于把净失水换算成每小时。',
+      submit: '估算出汗率',
+      loss: '净失水',
+      rate: '估算出汗率',
+      percent: '体重下降',
+      status: '2% 阈值',
+      resultTitle: '结果',
+      disclaimer: '公式来自 2007 年 ACSM 运动与补液立场文件：运动中补液的目标是避免超过 2% 的体重丢失，个体出汗率可用运动前后体重估算。工具不计算汗钠，不判断脱水或疾病，也不替代医生或运动营养师的建议。',
+      strings: {
+        above: '超过 2%：这次训练的体重下降高于 ACSM 的「过度脱水」阈值。把它当作调整补液与强度的提示，不是诊断。',
+        below: '未超过 2%：这次训练的体重下降在阈值以内。请在不用天气和强度下重复测量，再判断你的典型出汗率。',
+        note: '单次结果会受天气、强度、衣物、适应状态、月经周期和疾病影响；不要用一次数字固定饮水计划。',
+      },
+      weightsError: '请输入 30–200 公斤之间的运动前和运动后体重。',
+      intakeError: '请输入 0–10 升之间的饮用量。',
+      durationError: '请输入 1–1440 分钟之间的运动时长。',
+    }
+  : {
+      title: 'Sweat-rate estimate',
+      intro: 'Using body mass before and after exercise and the fluid actually swallowed during the session, this applies the ACSM before-and-after weighing method to estimate net fluid loss, sweat rate per hour and body mass loss percentage for that one session. It is arithmetic on one measurement, not your fixed sweat rate and not a hydration prescription.',
+      pre: 'Body mass before exercise (kg)',
+      preHint: '30–200. Empty your bladder, wear similar clothing and use the same scale.',
+      post: 'Body mass after exercise (kg)',
+      postHint: '30–200. Towel dry and remove wet clothing before weighing to reduce error.',
+      intake: 'Fluid consumed during exercise (L)',
+      intakeHint: '0–10. Count only what was actually swallowed, not what was spilled or left in the bottle.',
+      duration: 'Exercise duration (minutes)',
+      durationHint: '1–1440. Used to convert net loss into an hourly rate.',
+      submit: 'Estimate sweat rate',
+      loss: 'Net fluid loss',
+      rate: 'Estimated sweat rate',
+      percent: 'Body mass loss',
+      status: '2% threshold',
+      resultTitle: 'Result',
+      disclaimer: 'The formula follows the 2007 ACSM position stand on exercise and fluid replacement: the goal of drinking during exercise is to avoid more than 2% body mass loss, and individual sweat rate can be estimated from body mass before and after exercise. The tool does not calculate sweat sodium, does not diagnose dehydration or disease, and does not replace a doctor or sports dietitian.',
+      strings: {
+        above: 'Above 2%: body mass loss in this session exceeded the ACSM threshold for excessive dehydration. Treat it as a prompt to review fluid intake and conditions, not as a diagnosis.',
+        below: 'At or below 2%: body mass loss stayed within the threshold in this session. Repeat the measurement in different weather and intensities before treating it as your typical sweat rate.',
+        note: 'A single result is affected by weather, intensity, clothing, acclimatisation, menstrual cycle and illness; do not lock your drinking plan to one number.',
+      },
+      weightsError: 'Enter pre- and post-exercise body masses between 30 and 200 kilograms.',
+      intakeError: 'Enter a fluid intake between 0 and 10 litres.',
+      durationError: 'Enter an exercise duration between 1 and 1440 minutes.',
+    };
+---
+
+<div class="sw-tool" data-sweat-rate data-locale={locale} data-strings={JSON.stringify(copy.strings)}>
+  <h2>{copy.title}</h2>
+  <p class="sw-intro">{copy.intro}</p>
+  <form class="sw-form" data-sw-form novalidate>
+    <div class="field">
+      <label for="sw-pre">{copy.pre}</label>
+      <input id="sw-pre" name="preWeightKg" data-sw-pre type="number" min="30" max="200" step="0.1" value="70" inputmode="decimal" />
+      <p class="field-hint">{copy.preHint}</p>
+      <p class="field-error" data-error="weights" hidden>{copy.weightsError}</p>
+    </div>
+    <div class="field">
+      <label for="sw-post">{copy.post}</label>
+      <input id="sw-post" name="postWeightKg" data-sw-post type="number" min="30" max="200" step="0.1" value="69.2" inputmode="decimal" />
+      <p class="field-hint">{copy.postHint}</p>
+    </div>
+    <div class="field">
+      <label for="sw-intake">{copy.intake}</label>
+      <input id="sw-intake" name="fluidIntakeLiters" data-sw-intake type="number" min="0" max="10" step="0.01" value="0.5" inputmode="decimal" />
+      <p class="field-hint">{copy.intakeHint}</p>
+      <p class="field-error" data-error="intake" hidden>{copy.intakeError}</p>
+    </div>
+    <div class="field">
+      <label for="sw-duration">{copy.duration}</label>
+      <input id="sw-duration" name="durationMinutes" data-sw-duration type="number" min="1" max="1440" step="1" value="60" inputmode="numeric" />
+      <p class="field-hint">{copy.durationHint}</p>
+      <p class="field-error" data-error="duration" hidden>{copy.durationError}</p>
+    </div>
+    <button class="button primary" type="submit"><Icon name="drop" size={17} />{copy.submit}</button>
+  </form>
+  <div class="sw-result" data-sw-result role="status" aria-live="polite" hidden>
+    <div class="sw-grid">
+      <div><span>{copy.loss}</span><strong data-sw-loss>—</strong></div>
+      <div><span>{copy.rate}</span><strong data-sw-rate>—</strong></div>
+      <div><span>{copy.percent}</span><strong data-sw-percent>—</strong></div>
+    </div>
+    <p class="sw-flag" data-sw-flag></p>
+    <p class="sw-note" data-sw-note></p>
+  </div>
+  <p class="sw-disclaimer">{copy.disclaimer}</p>
+</div>
+
+<style>
+  .sw-tool { display: grid; gap: 18px; }
+  .sw-tool h2 { margin: 0; font-size: 1.25rem; }
+  .sw-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .sw-form { display: grid; gap: 16px; max-width: 480px; }
+  .sw-form .field { display: grid; gap: 6px; }
+  .sw-form label { font-weight: 700; }
+  .sw-form input { width: 100%; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .sw-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 14px; }
+  .sw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .sw-grid > div { padding: 14px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); display: grid; gap: 5px; }
+  .sw-grid span { color: var(--muted); font-size: .82rem; }
+  .sw-grid strong { font-size: 1.02rem; overflow-wrap: anywhere; }
+  .sw-flag { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .sw-note { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.6; }
+  .sw-disclaimer { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .sw-grid { grid-template-columns: 1fr; } }
+</style>

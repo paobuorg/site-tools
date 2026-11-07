@@ -1,0 +1,103 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '坡度配速换算',
+      intro: '用 Minetti 跑步能耗多项式，把某段坡度的实际配速换算成同等代谢代价的平路配速。它不预测成绩，也不替代教练或医疗判断。',
+      pace: '实际配速（秒/公里）',
+      paceHint: '例如 300 表示 5:00/公里。填这一段上坡或下坡的平均配速。',
+      gradient: '平均坡度（%）',
+      gradientHint: '−45 到 45。上坡为正，下坡为负；例如 8 表示每 100 米上升 8 米。',
+      submit: '换算平路等效配速',
+      cost: '跑步能耗',
+      ratio: '相对平路',
+      flatPace: '平路等效配速',
+      resultTitle: '结果',
+      disclaimer: '能耗公式来自 Minetti 等（2002）的跑步多项式。结果是等代谢代价的换算，不是成绩预测，也不代表你实际能在平路上跑出该配速。',
+      strings: {
+        uphill: '上坡：模型给出的平路等效配速比实际配速更快。它表示相同代谢代价，不代表你一定能在平路上跑出这个速度。',
+        downhill: '下坡：模型把下坡跑视为更省能，所以平路等效配速比实际配速慢。模型没有计入制动与离心收缩造成的肌肉损伤，越陡的下坡越不适用。',
+        'steep-downhill': '陡下坡：在这个模型里，坡度超过约 −20% 至 −25% 后能耗不再继续下降，更陡时反而上升。模型没有计入制动、离心损伤和技术地形，不要把陡下坡的结果当成「可以快跑」的许可。',
+        flat: '平路：平路等效配速等于实际配速。',
+      },
+      paceError: '请输入大于 0 的实际配速（秒/公里）。',
+      gradientError: '请输入 −45 到 45 之间的坡度。',
+    }
+  : {
+      title: 'Grade-adjusted pace',
+      intro: 'Convert the pace you ran on a gradient into the flat pace with the same modelled metabolic cost, using the Minetti running-cost polynomial. It does not predict performance and does not replace coaching or medical judgement.',
+      pace: 'Actual pace (seconds per km)',
+      paceHint: 'For example, 300 means 5:00 per kilometre. Use the average pace for the uphill or downhill segment.',
+      gradient: 'Average gradient (%)',
+      gradientHint: '−45 to 45. Uphill is positive and downhill is negative; 8 means 8 metres of rise per 100 metres.',
+      submit: 'Convert to flat-equivalent pace',
+      cost: 'Running cost',
+      ratio: 'Relative to flat',
+      flatPace: 'Flat-equivalent pace',
+      resultTitle: 'Result',
+      disclaimer: 'The cost formula is the Minetti et al. (2002) running polynomial. The result is an equal-cost conversion, not a performance prediction, and it does not mean you could actually run that pace on the flat.',
+      strings: {
+        uphill: 'Uphill: the flat-equivalent pace is faster than the actual pace. It represents the same modelled metabolic cost, not a speed you could necessarily hold on the flat.',
+        downhill: 'Downhill: this model treats downhill running as cheaper, so the flat-equivalent pace is slower than the actual pace. The model does not include braking or eccentric muscle damage, and it applies less well as descents get steeper.',
+        'steep-downhill': 'Steep descent: in this model the cost stops falling below roughly −20% to −25% and rises again on steeper slopes. It does not include braking, eccentric damage or technical terrain, so do not read a steep-descent result as permission to run fast.',
+        flat: 'Flat: the flat-equivalent pace equals the actual pace.',
+      },
+      paceError: 'Enter an actual pace above zero seconds per kilometre.',
+      gradientError: 'Enter a gradient between −45 and 45 percent.',
+    };
+---
+
+<div class="gap-tool" data-grade-adjusted-pace data-locale={locale} data-strings={JSON.stringify(copy.strings)}>
+  <h2>{copy.title}</h2>
+  <p class="gap-intro">{copy.intro}</p>
+  <form class="gap-form" data-gap-form novalidate>
+    <div class="field">
+      <label for="gap-pace">{copy.pace}</label>
+      <input id="gap-pace" name="actualPaceSecondsPerKm" data-gap-pace type="number" min="1" step="1" value="300" inputmode="numeric" />
+      <p class="field-hint">{copy.paceHint}</p>
+      <p class="field-error" data-error="pace" hidden>{copy.paceError}</p>
+    </div>
+    <div class="field">
+      <label for="gap-gradient">{copy.gradient}</label>
+      <input id="gap-gradient" name="gradientPercent" data-gap-gradient type="number" min="-45" max="45" step="1" value="5" inputmode="decimal" />
+      <p class="field-hint">{copy.gradientHint}</p>
+      <p class="field-error" data-error="gradient" hidden>{copy.gradientError}</p>
+    </div>
+    <button class="button primary" type="submit"><Icon name="mountain" size={17} />{copy.submit}</button>
+  </form>
+  <div class="gap-result" data-gap-result role="status" aria-live="polite" hidden>
+    <div class="gap-grid">
+      <div><span>{copy.cost}</span><strong data-gap-cost>—</strong></div>
+      <div><span>{copy.ratio}</span><strong data-gap-ratio>—</strong></div>
+      <div><span>{copy.flatPace}</span><strong data-gap-flat-pace>—</strong></div>
+    </div>
+    <p class="gap-note" data-gap-note></p>
+  </div>
+  <p class="gap-disclaimer">{copy.disclaimer}</p>
+</div>
+
+<style>
+  .gap-tool { display: grid; gap: 18px; }
+  .gap-tool h2 { margin: 0; font-size: 1.25rem; }
+  .gap-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .gap-form { display: grid; gap: 16px; max-width: 480px; }
+  .gap-form .field { display: grid; gap: 6px; }
+  .gap-form label { font-weight: 700; }
+  .gap-form input { width: 100%; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .gap-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 14px; }
+  .gap-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .gap-grid > div { padding: 14px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); display: grid; gap: 5px; }
+  .gap-grid span { color: var(--muted); font-size: .82rem; }
+  .gap-grid strong { font-size: 1.08rem; }
+  .gap-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .gap-disclaimer { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .gap-grid { grid-template-columns: 1fr; } }
+</style>

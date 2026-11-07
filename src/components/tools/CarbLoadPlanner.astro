@@ -1,0 +1,113 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '碳水加载计划',
+      intro: '按 2016 年 ACSM 联合立场文件的 10–12 g/kg/天与 36–48 小时窗口，算出加载期的每日与总量区间。它只做算术与适用性提示，不是个人饮食处方。',
+      mass: '体重（公斤）',
+      massHint: '30–200。用于把 g/kg 换算成每日克数。',
+      duration: '比赛预计时长（分钟）',
+      durationHint: '1–1440。超过 90 分钟才提示适用碳水加载。',
+      window: '加载窗口（小时）',
+      windowHint: '36–48。立场文件给的是区间，不是必须精确到小时。',
+      submit: '计算加载区间',
+      status: '适用性',
+      daily: '每日碳水',
+      total: '窗口总量',
+      resultTitle: '结果',
+      disclaimer: '区间来自 ACSM、AND 与 DC 的联合立场文件。算法只把 10–12 g/kg/天按体重和窗口缩放，不判断你个人是否需要加载，也不替代运动营养师或医生的建议。',
+      strings: {
+        indicated: '适用：比赛超过 90 分钟，可按 10–12 g/kg/天规划 36–48 小时。把总量拆成多餐，并在训练中练习食物与分量。',
+        'not-indicated': '不适用：比赛不超过 90 分钟。更相关的目标是赛前 24 小时正常高碳水饮食，而不是加载。',
+        note: '数值是规划区间，不是必须吃到的目标；吃不下时应调整食物形态与分配，不要硬塞。',
+      },
+      massError: '请输入 30–200 公斤之间的体重。',
+      durationError: '请输入 1–1440 分钟之间的比赛时长。',
+      windowError: '请输入 36–48 小时之间的加载窗口。',
+    }
+  : {
+      title: 'Carb-load planner',
+      intro: 'Calculate the daily and total carbohydrate band for a loading period using the 2016 ACSM joint position statement range of 10–12 g/kg/day over a 36–48 hour window. It performs arithmetic and an indication check, not a personal dietary prescription.',
+      mass: 'Body mass (kg)',
+      massHint: '30–200. Used to convert g/kg into daily grams.',
+      duration: 'Expected race duration (minutes)',
+      durationHint: '1–1440. Loading is only flagged as indicated above 90 minutes.',
+      window: 'Loading window (hours)',
+      windowHint: '36–48. The position statement gives a range, not an exact hour.',
+      submit: 'Calculate loading band',
+      status: 'Indication',
+      daily: 'Daily carbohydrate',
+      total: 'Total over the window',
+      resultTitle: 'Result',
+      disclaimer: 'The range comes from the ACSM, AND and DC joint position statement. The calculation only scales 10–12 g/kg/day by body mass and window; it does not judge whether you personally need to load, and it does not replace a sports dietitian or doctor.',
+      strings: {
+        indicated: 'Indicated: the race is longer than 90 minutes, so plan 10–12 g/kg/day across 36–48 hours. Split the total across several meals and practise the foods and portions in training.',
+        'not-indicated': 'Not indicated: the race is 90 minutes or shorter. A normal high-carbohydrate intake in the 24 hours before exercise is the more relevant target than loading.',
+        note: 'The numbers are a planning band, not a target you must force down; if appetite fails, change food form and timing rather than forcing volume.',
+      },
+      massError: 'Enter a body mass between 30 and 200 kilograms.',
+      durationError: 'Enter a race duration between 1 and 1440 minutes.',
+      windowError: 'Enter a loading window between 36 and 48 hours.',
+    };
+---
+
+<div class="cl-tool" data-carb-load-planner data-locale={locale} data-strings={JSON.stringify(copy.strings)}>
+  <h2>{copy.title}</h2>
+  <p class="cl-intro">{copy.intro}</p>
+  <form class="cl-form" data-cl-form novalidate>
+    <div class="field">
+      <label for="cl-mass">{copy.mass}</label>
+      <input id="cl-mass" name="bodyMassKg" data-cl-mass type="number" min="30" max="200" step="0.1" value="70" inputmode="decimal" />
+      <p class="field-hint">{copy.massHint}</p>
+      <p class="field-error" data-error="mass" hidden>{copy.massError}</p>
+    </div>
+    <div class="field">
+      <label for="cl-duration">{copy.duration}</label>
+      <input id="cl-duration" name="eventDurationMinutes" data-cl-duration type="number" min="1" max="1440" step="1" value="240" inputmode="numeric" />
+      <p class="field-hint">{copy.durationHint}</p>
+      <p class="field-error" data-error="duration" hidden>{copy.durationError}</p>
+    </div>
+    <div class="field">
+      <label for="cl-window">{copy.window}</label>
+      <input id="cl-window" name="loadWindowHours" data-cl-window type="number" min="36" max="48" step="1" value="48" inputmode="numeric" />
+      <p class="field-hint">{copy.windowHint}</p>
+      <p class="field-error" data-error="window" hidden>{copy.windowError}</p>
+    </div>
+    <button class="button primary" type="submit"><Icon name="spark" size={17} />{copy.submit}</button>
+  </form>
+  <div class="cl-result" data-cl-result role="status" aria-live="polite" hidden>
+    <div class="cl-grid">
+      <div><span>{copy.status}</span><strong data-cl-status>—</strong></div>
+      <div><span>{copy.daily}</span><strong data-cl-daily>—</strong></div>
+      <div><span>{copy.total}</span><strong data-cl-total>—</strong></div>
+    </div>
+    <p class="cl-note" data-cl-note></p>
+  </div>
+  <p class="cl-disclaimer">{copy.disclaimer}</p>
+</div>
+
+<style>
+  .cl-tool { display: grid; gap: 18px; }
+  .cl-tool h2 { margin: 0; font-size: 1.25rem; }
+  .cl-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .cl-form { display: grid; gap: 16px; max-width: 480px; }
+  .cl-form .field { display: grid; gap: 6px; }
+  .cl-form label { font-weight: 700; }
+  .cl-form input { width: 100%; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .cl-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 14px; }
+  .cl-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .cl-grid > div { padding: 14px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); display: grid; gap: 5px; }
+  .cl-grid span { color: var(--muted); font-size: .82rem; }
+  .cl-grid strong { font-size: 1.02rem; overflow-wrap: anywhere; }
+  .cl-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .cl-disclaimer { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .cl-grid { grid-template-columns: 1fr; } }
+</style>

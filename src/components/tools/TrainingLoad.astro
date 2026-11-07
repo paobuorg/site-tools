@@ -1,0 +1,156 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '急性与慢性负荷比',
+      intro: '用近 7 天负荷和 28 天平均负荷算出比值与周变化，给出一个经验性区间，不做诊断。',
+      weekly: '本周训练时间（分钟）',
+      weeklyHint: '0 或更大；用于记录本周总量。',
+      sessions: '每周训练次数',
+      sessionsHint: '1–14 次。',
+      rpe: '平均主观用力（1–10）',
+      rpeHint: '按你熟悉的 1–10 分主观用力评分估算。',
+      acute: '近 7 天负荷',
+      acuteHint: '把每次训练的时长（分钟）乘以主观用力分，再相加。',
+      chronic: '28 天平均负荷',
+      chronicHint: '同一算法的 28 天平均；没有记录时无法判断比值。',
+      submit: '计算负荷比',
+      ratio: '急慢比',
+      ramp: '周变化',
+      band: '区间',
+      resultTitle: '结果',
+      disclaimer: '这是经验性启发式，负荷与损伤关系的证据存在冲突，且不构成诊断。',
+      labels: {
+        low: '偏低',
+        typical: '常见',
+        elevated: '偏高',
+        spike: '突增',
+        unknown: '无法计算',
+      },
+      notes: {
+        low: '比值低于 0.8：近 7 天负荷明显低于 28 天平均。计划内的减量周或记录不完整都可能造成这个结果，先确认 28 天记录是否完整。这是经验性启发式，负荷与损伤关系的证据存在冲突，且不构成诊断。',
+        typical: '比值在 0.8–1.3：近 7 天负荷接近 28 天平均，通常被描述为常见范围。这是经验性启发式，负荷与损伤关系的证据存在冲突，且不构成诊断。',
+        elevated: '比值高于 1.3：近 7 天负荷比 28 天平均上升更快。检查睡眠、疼痛和恢复情况，考虑先稳住跑量而不是继续加量。这是经验性启发式，负荷与损伤关系的证据存在冲突，且不构成诊断。',
+        spike: '比值高于 1.5：近 7 天负荷相对 28 天平均突然上升。把它当作复查训练与恢复的提示，而不是问题的证据。这是经验性启发式，负荷与损伤关系的证据存在冲突，且不构成诊断。',
+        unknown: '28 天平均负荷为 0，无法计算比值。请先填写 28 天平均负荷。这是经验性启发式，负荷与损伤关系的证据存在冲突，且不构成诊断。',
+      },
+      weeklyError: '请输入 0 或更大的训练分钟数。',
+      sessionsError: '请输入 1 到 14 之间的每周次数。',
+      rpeError: '请输入 1 到 10 之间的主观用力。',
+      acuteError: '请输入 0 或更大的近 7 天负荷。',
+      chronicError: '请输入 0 或更大的 28 天平均负荷。',
+    }
+  : {
+      title: 'Acute-to-chronic load ratio',
+      intro: 'Compare the last 7 days with the 28-day average to get a ratio, weekly change and an experience-based band. Not a diagnosis.',
+      weekly: 'Training minutes this week',
+      weeklyHint: 'Zero or greater; recorded as weekly volume.',
+      sessions: 'Sessions per week',
+      sessionsHint: '1–14 sessions.',
+      rpe: 'Average perceived exertion (1–10)',
+      rpeHint: 'Use the 1–10 perceived-exertion scale you normally apply.',
+      acute: 'Load in the last 7 days',
+      acuteHint: 'For each session, multiply duration in minutes by perceived exertion, then add them up.',
+      chronic: '28-day average load',
+      chronicHint: 'The same calculation averaged over 28 days; without records the ratio cannot be read.',
+      submit: 'Calculate load ratio',
+      ratio: 'Acute:chronic ratio',
+      ramp: 'Weekly change',
+      band: 'Band',
+      resultTitle: 'Result',
+      disclaimer: 'This is an experience-based heuristic; evidence on load and injury is conflicting, and it is not a diagnosis.',
+      labels: {
+        low: 'low',
+        typical: 'typical',
+        elevated: 'elevated',
+        spike: 'spike',
+        unknown: 'unknown',
+      },
+      notes: {
+        low: 'Ratio below 0.8: the last 7 days sit well under the 28-day average. A planned recovery week or incomplete records can explain this; check that the last 28 days were logged. This is an experience-based heuristic; evidence on load and injury is conflicting, and it is not a diagnosis.',
+        typical: 'Ratio 0.8–1.3: the last 7 days are close to the 28-day average, the band often described as typical. This is an experience-based heuristic; evidence on load and injury is conflicting, and it is not a diagnosis.',
+        elevated: 'Ratio above 1.3: the last 7 days rose faster than the 28-day average. Review sleep, pain and recovery, and consider holding volume rather than adding more. This is an experience-based heuristic; evidence on load and injury is conflicting, and it is not a diagnosis.',
+        spike: 'Ratio above 1.5: the last 7 days rose sharply against the 28-day average. Treat this as a prompt to review training and recovery, not as proof of a problem. This is an experience-based heuristic; evidence on load and injury is conflicting, and it is not a diagnosis.',
+        unknown: 'The 28-day average is zero, so the ratio is undefined. Enter the 28-day average load first. This is an experience-based heuristic; evidence on load and injury is conflicting, and it is not a diagnosis.',
+      },
+      weeklyError: 'Enter training minutes of zero or greater.',
+      sessionsError: 'Enter between 1 and 14 sessions per week.',
+      rpeError: 'Enter average perceived exertion between 1 and 10.',
+      acuteError: 'Enter a 7-day load of zero or greater.',
+      chronicError: 'Enter a 28-day average load of zero or greater.',
+    };
+const strings = copy.notes;
+---
+
+<div class="tl-tool" data-training-load data-locale={locale} data-strings={JSON.stringify(strings)} data-labels={JSON.stringify(copy.labels)}>
+  <h2>{copy.title}</h2>
+  <p class="tl-intro">{copy.intro}</p>
+  <form class="tl-form" data-tl-form novalidate>
+    <div class="field">
+      <label for="tl-weekly">{copy.weekly}</label>
+      <input id="tl-weekly" name="weeklyTrainingMinutes" data-tl-weekly type="number" min="0" step="1" value="240" inputmode="numeric" />
+      <p class="field-hint">{copy.weeklyHint}</p>
+      <p class="field-error" data-error="weeklyMinutes" hidden>{copy.weeklyError}</p>
+    </div>
+    <div class="field">
+      <label for="tl-sessions">{copy.sessions}</label>
+      <input id="tl-sessions" name="sessionsPerWeek" data-tl-sessions type="number" min="1" max="14" step="1" value="4" inputmode="numeric" />
+      <p class="field-hint">{copy.sessionsHint}</p>
+      <p class="field-error" data-error="sessions" hidden>{copy.sessionsError}</p>
+    </div>
+    <div class="field">
+      <label for="tl-rpe">{copy.rpe}</label>
+      <input id="tl-rpe" name="averageRpe" data-tl-rpe type="number" min="1" max="10" step="1" value="5" inputmode="numeric" />
+      <p class="field-hint">{copy.rpeHint}</p>
+      <p class="field-error" data-error="rpe" hidden>{copy.rpeError}</p>
+    </div>
+    <div class="field">
+      <label for="tl-acute">{copy.acute}</label>
+      <input id="tl-acute" name="acuteLoad" data-tl-acute type="number" min="0" step="any" value="420" inputmode="decimal" />
+      <p class="field-hint">{copy.acuteHint}</p>
+      <p class="field-error" data-error="acute" hidden>{copy.acuteError}</p>
+    </div>
+    <div class="field">
+      <label for="tl-chronic">{copy.chronic}</label>
+      <input id="tl-chronic" name="chronicLoad" data-tl-chronic type="number" min="0" step="any" value="400" inputmode="decimal" />
+      <p class="field-hint">{copy.chronicHint}</p>
+      <p class="field-error" data-error="chronic" hidden>{copy.chronicError}</p>
+    </div>
+    <button class="button primary" type="submit"><Icon name="chart" size={17} />{copy.submit}</button>
+  </form>
+  <div class="tl-result" data-tl-result role="status" aria-live="polite" hidden>
+    <div class="tl-grid">
+      <div><span>{copy.ratio}</span><strong data-tl-ratio>—</strong></div>
+      <div><span>{copy.ramp}</span><strong data-tl-ramp>—</strong></div>
+      <div><span>{copy.band}</span><strong data-tl-band>—</strong></div>
+    </div>
+    <p class="tl-note" data-tl-note></p>
+  </div>
+  <p class="tl-disclaimer">{copy.disclaimer}</p>
+</div>
+
+<style>
+  .tl-tool { display: grid; gap: 18px; }
+  .tl-tool h2 { margin: 0; font-size: 1.25rem; }
+  .tl-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .tl-form { display: grid; gap: 16px; max-width: 480px; }
+  .tl-form .field { display: grid; gap: 6px; }
+  .tl-form label { font-weight: 700; }
+  .tl-form input { width: 100%; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .tl-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 14px; }
+  .tl-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .tl-grid > div { padding: 14px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); display: grid; gap: 5px; }
+  .tl-grid span { color: var(--muted); font-size: .82rem; }
+  .tl-grid strong { font-size: 1.08rem; }
+  .tl-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .tl-disclaimer { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .tl-grid { grid-template-columns: 1fr; } }
+</style>

@@ -18,6 +18,12 @@ export const TOOL_CATEGORY: Record<string, ToolCategory> = {
   'route-elevation': 'track',
   'shoe-mileage': 'track',
   'race-checklist': 'pace',
+  'training-load': 'pace',
+  'heat-adjust': 'pace',
+  'grade-adjusted-pace': 'pace',
+  'carb-load-planner': 'pace',
+  'sweat-rate': 'pace',
+  'injury-risk-check': 'pace',
 };
 
 export const TOOL_ICON: Record<string, string> = {
@@ -33,6 +39,12 @@ export const TOOL_ICON: Record<string, string> = {
   'route-elevation': 'ruler',
   'shoe-mileage': 'shoe',
   'race-checklist': 'check',
+  'training-load': 'chart',
+  'heat-adjust': 'sun',
+  'grade-adjusted-pace': 'mountain',
+  'carb-load-planner': 'spark',
+  'sweat-rate': 'drop',
+  'injury-risk-check': 'bone',
 };
 
 export function toolDetails(entity: ContentEntity): ToolDetails {

@@ -1,0 +1,138 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '跑步疼痛自查',
+      intro: '用 7 个简单问题计算一个经验性分数，提示是否需要进一步评估。它不是诊断，也不能排除损伤。',
+      painRun: '跑步时疼痛',
+      painRest: '休息或走路时疼痛',
+      swelling: '肿胀',
+      night: '夜间或晨起疼痛',
+      volume: '近一周跑量变化（%）',
+      volumeHint: '增加为正数，减少为负数；例如 +12 表示增加 12%。',
+      sleep: '最近睡眠（小时/晚）',
+      sleepHint: '按最近几晚的平均值填写。',
+      prior: '同一部位曾经受伤',
+      submit: '计算自查分数',
+      score: '分数',
+      band: '区间',
+      resultTitle: '结果',
+      disclaimer: '这个自查不能诊断损伤，也不能排除损伤。出现静息痛、走路痛或肿胀时，应停止跑步并寻求医疗或物理治疗评估。',
+      labels: {
+        low: '低',
+        moderate: '中',
+        high: '高',
+      },
+      notes: {
+        low: '低区间：目前没有报告红旗信号。继续观察症状；这个自查不是诊断，也不能排除损伤。',
+        moderate: '中区间：观察症状并考虑降低负荷。如果疼痛严重、持续或伴随肿胀，应寻求医疗或物理治疗建议。这个自查不是诊断，也不能排除损伤。',
+        high: '高区间：同时存在多个因素。降低负荷；症状持续时应寻求医疗或物理治疗建议。这个自查不是诊断，也不能排除损伤。',
+        seek: '应寻求评估：休息或走路时疼痛，或出现肿胀，是停止跑步并寻求医疗或物理治疗建议的理由。这个自查不是诊断，也不能排除损伤。',
+      },
+      volumeError: '请输入有效的跑量变化百分比。',
+      sleepError: '请输入 0 到 24 之间的睡眠小时数。',
+    }
+  : {
+      title: 'Running pain self-check',
+      intro: 'Seven simple questions produce an experience-based score and a prompt about whether further assessment is sensible. It is not a diagnosis and cannot rule out injury.',
+      painRun: 'Pain during running',
+      painRest: 'Pain at rest or while walking',
+      swelling: 'Swelling',
+      night: 'Night or morning pain',
+      volume: 'Volume change in the past week (%)',
+      volumeHint: 'Positive for an increase, negative for a decrease; for example, +12 means a 12% increase.',
+      sleep: 'Recent sleep (hours per night)',
+      sleepHint: 'Use the average of the past few nights.',
+      prior: 'Prior injury in the same area',
+      submit: 'Calculate self-check score',
+      score: 'Score',
+      band: 'Band',
+      resultTitle: 'Result',
+      disclaimer: 'This self-check cannot diagnose or rule out an injury. With pain at rest, pain while walking or swelling, stop running and seek medical or physiotherapy assessment.',
+      labels: {
+        low: 'low',
+        moderate: 'moderate',
+        high: 'high',
+      },
+      notes: {
+        low: 'Low band: no red flags were reported. Keep monitoring; this self-check is not a diagnosis and cannot rule out injury.',
+        moderate: 'Moderate band: monitor symptoms and consider reducing load. If pain is severe, persistent or comes with swelling, seek medical or physiotherapy advice. This self-check is not a diagnosis and cannot rule out injury.',
+        high: 'High band: several factors are present. Reduce load and seek medical or physiotherapy advice if symptoms persist. This self-check is not a diagnosis and cannot rule out injury.',
+        seek: 'Seek assessment: pain at rest or while walking, or swelling, is a reason to stop running and get medical or physiotherapy advice. This self-check is not a diagnosis and cannot rule out injury.',
+      },
+      volumeError: 'Enter a valid volume change percentage.',
+      sleepError: 'Enter sleep hours between 0 and 24.',
+    };
+const strings = copy.notes;
+---
+
+<div class="ir-tool" data-injury-risk data-locale={locale} data-strings={JSON.stringify(strings)} data-labels={JSON.stringify(copy.labels)}>
+  <h2>{copy.title}</h2>
+  <p class="ir-intro">{copy.intro}</p>
+  <form class="ir-form" data-ir-form novalidate>
+    <fieldset class="ir-checks">
+      <legend>{copy.title}</legend>
+      <label class="ir-check"><input type="checkbox" name="painDuringRun" data-ir-pain-run />{copy.painRun}</label>
+      <label class="ir-check"><input type="checkbox" name="painAtRestOrWalking" data-ir-pain-rest />{copy.painRest}</label>
+      <label class="ir-check"><input type="checkbox" name="swelling" data-ir-swelling />{copy.swelling}</label>
+      <label class="ir-check"><input type="checkbox" name="nightOrMorningPain" data-ir-night />{copy.night}</label>
+      <label class="ir-check"><input type="checkbox" name="priorInjurySameArea" data-ir-prior />{copy.prior}</label>
+    </fieldset>
+    <div class="field">
+      <label for="ir-volume">{copy.volume}</label>
+      <input id="ir-volume" name="weeklyVolumeChangePercent" data-ir-volume type="number" step="1" value="6" inputmode="decimal" />
+      <p class="field-hint">{copy.volumeHint}</p>
+      <p class="field-error" data-error="volume" hidden>{copy.volumeError}</p>
+    </div>
+    <div class="field">
+      <label for="ir-sleep">{copy.sleep}</label>
+      <input id="ir-sleep" name="sleepHours" data-ir-sleep type="number" min="0" max="24" step="0.5" value="7.5" inputmode="decimal" />
+      <p class="field-hint">{copy.sleepHint}</p>
+      <p class="field-error" data-error="sleep" hidden>{copy.sleepError}</p>
+    </div>
+    <p class="field-error" data-error="painDuringRun" hidden></p>
+    <p class="field-error" data-error="painAtRest" hidden></p>
+    <p class="field-error" data-error="swelling" hidden></p>
+    <p class="field-error" data-error="nightPain" hidden></p>
+    <p class="field-error" data-error="priorInjury" hidden></p>
+    <button class="button primary" type="submit"><Icon name="bone" size={17} />{copy.submit}</button>
+  </form>
+  <div class="ir-result" data-ir-result role="status" aria-live="polite" hidden>
+    <div class="ir-grid">
+      <div><span>{copy.score}</span><strong data-ir-score>—</strong></div>
+      <div><span>{copy.band}</span><strong data-ir-band>—</strong></div>
+    </div>
+    <p class="ir-note" data-ir-message></p>
+  </div>
+  <p class="ir-disclaimer">{copy.disclaimer}</p>
+</div>
+
+<style>
+  .ir-tool { display: grid; gap: 18px; }
+  .ir-tool h2 { margin: 0; font-size: 1.25rem; }
+  .ir-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .ir-form { display: grid; gap: 16px; max-width: 520px; }
+  .ir-form .field { display: grid; gap: 6px; }
+  .ir-form label { font-weight: 700; }
+  .ir-form input { width: 100%; }
+  .ir-checks { display: grid; gap: 8px; margin: 0; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; }
+  .ir-checks legend { padding: 0 6px; font-weight: 700; }
+  .ir-check { display: flex; align-items: center; gap: 9px; font-weight: 600; }
+  .ir-check input { width: auto; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .ir-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 14px; }
+  .ir-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .ir-grid > div { padding: 14px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); display: grid; gap: 5px; }
+  .ir-grid span { color: var(--muted); font-size: .82rem; }
+  .ir-grid strong { font-size: 1.08rem; }
+  .ir-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .ir-disclaimer { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .ir-grid { grid-template-columns: 1fr; } }
+</style>

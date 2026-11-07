@@ -1,0 +1,144 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      title: '高温配速调整',
+      intro: '用气温与相对湿度估算热负荷，给出经验性的配速放慢范围。它不替代体感、补水计划或医疗判断。',
+      temperature: '气温（摄氏度）',
+      temperatureHint: '-20 到 50 ℃，按训练时段的实际气温填写。',
+      humidity: '相对湿度（%）',
+      humidityHint: '0–100%。闷热天气即使气温不高也会增加热负荷。',
+      pace: '基准配速（秒/公里）',
+      paceHint: '例如 300 表示 5:00/公里。',
+      duration: '预计时长（分钟）',
+      durationHint: '大于 0；时长越长，暴露越久，越应靠向范围上限。',
+      submit: '估算热适应配速',
+      score: '热负荷分',
+      band: '区间',
+      range: '调整后配速',
+      resultTitle: '结果',
+      disclaimer: '区间是经验性范围，不是官方公式。出现热病症状应立即停止。',
+      labels: {
+        cool: '凉爽',
+        moderate: '温和',
+        hot: '炎热',
+        'very-hot': '酷热',
+        extreme: '极端',
+      },
+      notes: {
+        cool: '凉爽区间：经验性放慢 0–2%。即使气温不高，也按体感和补水需要调整。这是经验性范围，不是官方公式。出现热病症状应立即停止。',
+        moderate: '温和区间：经验性放慢 2–5%。湿度较高时，即使气温温和也可能感到更吃力。这是经验性范围，不是官方公式。出现热病症状应立即停止。',
+        hot: '炎热区间：经验性放慢 5–8%。考虑降低强度、缩短时长或改到更凉爽的时段。这是经验性范围，不是官方公式。出现热病症状应立即停止。',
+        'very-hot': '酷热区间：经验性放慢 7–10%。优先降低强度或改期；大量出汗、头晕、恶心、头痛或乏力可能是热衰竭。这是经验性范围，不是官方公式。出现热病症状应立即停止。',
+        extreme: '极端区间：经验性放慢 10–12%。这不是安全的训练建议，应改期或改到室内。意识混乱、口齿不清、体温很高、脉搏很快或失去意识属于急症，先叫急救并降温。这是经验性范围，不是官方公式。',
+      },
+      temperatureError: '请输入 -20 到 50 之间的气温。',
+      humidityError: '请输入 0 到 100 之间的相对湿度。',
+      paceError: '请输入大于 0 的基准配速（秒/公里）。',
+      durationError: '请输入大于 0 的时长。',
+    }
+  : {
+      title: 'Heat pace adjustment',
+      intro: 'Estimate heat load from temperature and humidity, then read an experience-based pace range. It does not replace how you feel, a fluid plan or medical judgement.',
+      temperature: 'Temperature (°C)',
+      temperatureHint: '−20 to 50 °C; use the temperature at the time you will run.',
+      humidity: 'Relative humidity (%)',
+      humidityHint: '0–100%. Humid air adds heat load even when the temperature is not high.',
+      pace: 'Baseline pace (seconds per km)',
+      paceHint: 'For example, 300 means 5:00 per kilometre.',
+      duration: 'Planned duration (minutes)',
+      durationHint: 'Greater than zero; longer exposure should sit nearer the top of the range.',
+      submit: 'Estimate heat-adjusted pace',
+      score: 'Heat score',
+      band: 'Band',
+      range: 'Adjusted pace',
+      resultTitle: 'Result',
+      disclaimer: 'The range is experience-based, not an official formula. Stop if heat-illness symptoms appear.',
+      labels: {
+        cool: 'cool',
+        moderate: 'moderate',
+        hot: 'hot',
+        'very-hot': 'very hot',
+        extreme: 'extreme',
+      },
+      notes: {
+        cool: 'Cool band: an experience-based 0–2% slowdown. Adjust to how you feel and your fluid needs even when the temperature is mild. This is an experience-based range, not an official formula. Stop if heat-illness symptoms appear.',
+        moderate: 'Moderate band: an experience-based 2–5% slowdown. High humidity can make a moderate temperature feel harder. This is an experience-based range, not an official formula. Stop if heat-illness symptoms appear.',
+        hot: 'Hot band: an experience-based 5–8% slowdown. Consider lower intensity, a shorter session or a cooler time of day. This is an experience-based range, not an official formula. Stop if heat-illness symptoms appear.',
+        'very-hot': 'Very hot band: an experience-based 7–10% slowdown. Prefer lower intensity or postponing; heavy sweating, dizziness, nausea, headache or weakness can indicate heat exhaustion. This is an experience-based range, not an official formula. Stop if heat-illness symptoms appear.',
+        extreme: 'Extreme band: an experience-based 10–12% slowdown. This is not a safe training recommendation; postpone or move indoors. Confusion, slurred speech, very high body temperature, a rapid pulse or loss of consciousness are emergencies—call emergency services first and cool the person while waiting. This is an experience-based range, not an official formula.',
+      },
+      temperatureError: 'Enter a temperature between −20 and 50 °C.',
+      humidityError: 'Enter relative humidity between 0 and 100%.',
+      paceError: 'Enter a baseline pace above zero seconds per kilometre.',
+      durationError: 'Enter a duration above zero.',
+    };
+const strings = copy.notes;
+---
+
+<div class="ha-tool" data-heat-adjust data-locale={locale} data-strings={JSON.stringify(strings)} data-labels={JSON.stringify(copy.labels)}>
+  <h2>{copy.title}</h2>
+  <p class="ha-intro">{copy.intro}</p>
+  <form class="ha-form" data-ha-form novalidate>
+    <div class="field">
+      <label for="ha-temperature">{copy.temperature}</label>
+      <input id="ha-temperature" name="temperatureC" data-ha-temperature type="number" min="-20" max="50" step="0.1" value="22" inputmode="decimal" />
+      <p class="field-hint">{copy.temperatureHint}</p>
+      <p class="field-error" data-error="temperature" hidden>{copy.temperatureError}</p>
+    </div>
+    <div class="field">
+      <label for="ha-humidity">{copy.humidity}</label>
+      <input id="ha-humidity" name="relativeHumidityPercent" data-ha-humidity type="number" min="0" max="100" step="1" value="65" inputmode="numeric" />
+      <p class="field-hint">{copy.humidityHint}</p>
+      <p class="field-error" data-error="humidity" hidden>{copy.humidityError}</p>
+    </div>
+    <div class="field">
+      <label for="ha-pace">{copy.pace}</label>
+      <input id="ha-pace" name="baselinePaceSecondsPerKm" data-ha-pace type="number" min="1" step="1" value="300" inputmode="numeric" />
+      <p class="field-hint">{copy.paceHint}</p>
+      <p class="field-error" data-error="pace" hidden>{copy.paceError}</p>
+    </div>
+    <div class="field">
+      <label for="ha-duration">{copy.duration}</label>
+      <input id="ha-duration" name="durationMinutes" data-ha-duration type="number" min="1" step="1" value="45" inputmode="numeric" />
+      <p class="field-hint">{copy.durationHint}</p>
+      <p class="field-error" data-error="duration" hidden>{copy.durationError}</p>
+    </div>
+    <button class="button primary" type="submit"><Icon name="sun" size={17} />{copy.submit}</button>
+  </form>
+  <div class="ha-result" data-ha-result role="status" aria-live="polite" hidden>
+    <div class="ha-grid">
+      <div><span>{copy.score}</span><strong data-ha-score>—</strong></div>
+      <div><span>{copy.band}</span><strong data-ha-band>—</strong></div>
+      <div><span>{copy.range}</span><strong data-ha-range>—</strong></div>
+    </div>
+    <p class="ha-note" data-ha-note></p>
+  </div>
+  <p class="ha-disclaimer">{copy.disclaimer}</p>
+</div>
+
+<style>
+  .ha-tool { display: grid; gap: 18px; }
+  .ha-tool h2 { margin: 0; font-size: 1.25rem; }
+  .ha-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .ha-form { display: grid; gap: 16px; max-width: 480px; }
+  .ha-form .field { display: grid; gap: 6px; }
+  .ha-form label { font-weight: 700; }
+  .ha-form input { width: 100%; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .85rem; }
+  .ha-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 14px; }
+  .ha-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .ha-grid > div { padding: 14px; border-radius: 14px; background: var(--surface-soft, rgba(8,184,157,.06)); display: grid; gap: 5px; }
+  .ha-grid span { color: var(--muted); font-size: .82rem; }
+  .ha-grid strong { font-size: 1.08rem; }
+  .ha-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .ha-disclaimer { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+  @media (max-width: 620px) { .ha-grid { grid-template-columns: 1fr; } }
+</style>

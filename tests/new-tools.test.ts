@@ -1,9 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { planFueling, FuelingInputError } from '../src/lib/fueling';
 import { analyzeElevation } from '../src/lib/elevation';
 import { summarizeShoe, validateShoe, ShoeInputError } from '../src/lib/shoe-mileage';
 import { buildChecklist } from '../src/lib/race-checklist';
+import { analyzeTrainingLoad, TrainingLoadInputError } from '../src/lib/training-load';
+import { adjustForHeat, HeatAdjustInputError } from '../src/lib/heat-adjust';
+import { checkInjuryRisk, InjuryRiskInputError } from '../src/lib/injury-risk-check';
+import { gradeAdjustedPace, GradeAdjustedPaceInputError } from '../src/lib/grade-adjusted-pace';
+import { planCarbLoad, CarbLoadPlannerInputError } from '../src/lib/carb-load-planner';
+import { estimateSweatRate, SweatRateInputError } from '../src/lib/sweat-rate';
+
+const toolsRoot = process.env.TOOLS_CONTENT_DIR
+  ? path.resolve(process.env.TOOLS_CONTENT_DIR)
+  : process.env.PAOBU_REPOS_DIR
+    ? path.join(process.env.PAOBU_REPOS_DIR, 'running-tools')
+    : path.resolve(import.meta.dirname, '../../running-tools');
+const casesDir = path.join(toolsRoot, 'data/cases');
+
+function readCase<T>(caseId: string): T {
+  return JSON.parse(fs.readFileSync(path.join(casesDir, `${caseId}.json`), 'utf8')) as T;
+}
+
+function assertNumber(actual: number | null, expected: number, floating: boolean): void {
+  assert.notEqual(actual, null, `Expected ${expected}, received null`);
+  const tolerance = floating ? 1e-6 : 0;
+  assert.ok(
+    Math.abs((actual as number) - expected) <= tolerance,
+    `Expected ${expected}, received ${actual}`,
+  );
+}
 
 test('fueling planner returns a 30-60 g/h range and serving estimate', () => {
   const plan = planFueling({ durationMinutes: 90, productCarbsGrams: 25 });
@@ -101,6 +129,28 @@ test('shoe mileage summarizes initial and logged distance without a universal re
   );
 });
 
+test('published shoe mileage cases match', () => {
+  const item = readCase<{
+    input: {
+      shoe: { id: string; name: string; initialKm: number; reminderKm: number };
+      runs: Array<{ id: string; shoeId: string; date: string; distanceKm: number }>;
+    };
+    expected: {
+      totalKm: number;
+      runCount: number;
+      remainingKm: number;
+      percentOfReminder: number;
+      lastRunDate: string;
+    };
+  }>('case-shoe-mileage-trail');
+  const summary = summarizeShoe(item.input.shoe, item.input.runs);
+  assertNumber(summary.totalKm, item.expected.totalKm, true);
+  assertNumber(summary.runCount, item.expected.runCount, false);
+  assertNumber(summary.remainingKm, item.expected.remainingKm, true);
+  assertNumber(summary.percentOfReminder, item.expected.percentOfReminder, true);
+  assert.equal(summary.lastRunDate, item.expected.lastRunDate);
+});
+
 test('race checklist changes with terrain, duration, weather and travel', () => {
   const basic = buildChecklist({
     raceType: 'road',
@@ -136,4 +186,398 @@ test('race checklist changes with terrain, duration, weather and travel', () => 
     travel: false,
   });
   assert.ok(wet.some((section) => section.id === 'cold-wet'));
+});
+
+test('published race checklist cases match', () => {
+  const item = readCase<{
+    input: {
+      raceType: 'road' | 'trail';
+      duration: 'under-3h' | '3-6h' | 'over-6h';
+      weather: 'mild' | 'hot' | 'cold' | 'rain';
+      travel: boolean;
+    };
+    expected: { sectionIds: string[]; requiredItems: string[] };
+  }>('case-race-checklist-road-rain');
+  const sections = buildChecklist(item.input);
+  assert.deepEqual(sections.map((section) => section.id), item.expected.sectionIds);
+  const itemIds = new Set(sections.flatMap((section) => section.items.map((entry) => entry.id)));
+  for (const required of item.expected.requiredItems) {
+    assert.ok(itemIds.has(required), `Missing checklist item ${required}`);
+  }
+});
+
+interface TrainingLoadCase {
+  input: {
+    weeklyTrainingMinutes: number;
+    sessionsPerWeek: number;
+    averageRpe: number;
+    acuteLoad: number;
+    chronicLoad: number;
+  };
+  expected: {
+    acuteChronicRatio: number;
+    weeklyRampPercent: number;
+    band: string;
+  };
+}
+
+test('training load normal case matches the typical-band case', () => {
+  const testCase = readCase<TrainingLoadCase>('case-training-load-typical');
+  const result = analyzeTrainingLoad(testCase.input);
+  assertNumber(result.acuteChronicRatio, testCase.expected.acuteChronicRatio, true);
+  assertNumber(result.weeklyRampPercent, testCase.expected.weeklyRampPercent, true);
+  assert.equal(result.band, testCase.expected.band);
+});
+
+test('training load boundary case keeps a ratio of 1.5 in the elevated band', () => {
+  const testCase = readCase<TrainingLoadCase>('case-training-load-boundary');
+  const result = analyzeTrainingLoad(testCase.input);
+  assertNumber(result.acuteChronicRatio, testCase.expected.acuteChronicRatio, true);
+  assertNumber(result.weeklyRampPercent, testCase.expected.weeklyRampPercent, true);
+  assert.equal(result.band, testCase.expected.band);
+});
+
+test('training load rejects sessions and RPE outside the declared range', () => {
+  const testCase = readCase<TrainingLoadCase>('case-training-load-typical');
+  assert.throws(
+    () => analyzeTrainingLoad({ ...testCase.input, sessionsPerWeek: 0 }),
+    (error: unknown) => error instanceof TrainingLoadInputError && error.field === 'sessions',
+  );
+  assert.throws(
+    () => analyzeTrainingLoad({ ...testCase.input, averageRpe: 11 }),
+    (error: unknown) => error instanceof TrainingLoadInputError && error.field === 'rpe',
+  );
+});
+
+interface HeatAdjustCase {
+  input: {
+    temperatureC: number;
+    relativeHumidityPercent: number;
+    baselinePaceSecondsPerKm: number;
+    durationMinutes: number;
+  };
+  expected: {
+    heatScore: number;
+    adjustedPaceLowSeconds: number;
+    adjustedPaceHighSeconds: number;
+    band: string;
+  };
+}
+
+test('heat adjust normal case matches the very-hot case', () => {
+  const testCase = readCase<HeatAdjustCase>('case-heat-adjust-very-hot');
+  const result = adjustForHeat(testCase.input);
+  assertNumber(result.heatScore, testCase.expected.heatScore, true);
+  assertNumber(result.adjustedPaceLowSeconds, testCase.expected.adjustedPaceLowSeconds, false);
+  assertNumber(result.adjustedPaceHighSeconds, testCase.expected.adjustedPaceHighSeconds, false);
+  assert.equal(result.band, testCase.expected.band);
+});
+
+test('heat adjust boundary case keeps a score of 24.0 in the very-hot band', () => {
+  const testCase = readCase<HeatAdjustCase>('case-heat-adjust-boundary');
+  const result = adjustForHeat(testCase.input);
+  assertNumber(result.heatScore, testCase.expected.heatScore, true);
+  assertNumber(result.adjustedPaceLowSeconds, testCase.expected.adjustedPaceLowSeconds, false);
+  assertNumber(result.adjustedPaceHighSeconds, testCase.expected.adjustedPaceHighSeconds, false);
+  assert.equal(result.band, testCase.expected.band);
+});
+
+test('heat adjust rejects temperature and humidity outside the declared range', () => {
+  const testCase = readCase<HeatAdjustCase>('case-heat-adjust-very-hot');
+  assert.throws(
+    () => adjustForHeat({ ...testCase.input, temperatureC: 60 }),
+    (error: unknown) => error instanceof HeatAdjustInputError && error.field === 'temperature',
+  );
+  assert.throws(
+    () => adjustForHeat({ ...testCase.input, relativeHumidityPercent: 101 }),
+    (error: unknown) => error instanceof HeatAdjustInputError && error.field === 'humidity',
+  );
+});
+
+interface InjuryRiskCase {
+  input: {
+    painDuringRun: boolean;
+    painAtRestOrWalking: boolean;
+    swelling: boolean;
+    nightOrMorningPain: boolean;
+    weeklyVolumeChangePercent: number;
+    sleepHours: number;
+    priorInjurySameArea: boolean;
+  };
+  expected: {
+    score: number;
+    band: string;
+    redFlags: boolean;
+  };
+}
+
+test('injury risk normal case matches the low-band case', () => {
+  const testCase = readCase<InjuryRiskCase>('case-injury-risk-low');
+  const result = checkInjuryRisk(testCase.input);
+  assertNumber(result.score, testCase.expected.score, false);
+  assert.equal(result.band, testCase.expected.band);
+  assert.equal(result.redFlags, testCase.expected.redFlags);
+  assert.ok(result.message.includes('not a diagnosis'));
+});
+
+test('injury risk boundary case matches the moderate-band case and flags rest pain', () => {
+  const testCase = readCase<InjuryRiskCase>('case-injury-risk-moderate');
+  const result = checkInjuryRisk(testCase.input);
+  assertNumber(result.score, testCase.expected.score, false);
+  assert.equal(result.band, testCase.expected.band);
+  assert.equal(result.redFlags, testCase.expected.redFlags);
+
+  const flagged = checkInjuryRisk({ ...testCase.input, painAtRestOrWalking: true });
+  assert.equal(flagged.redFlags, true);
+  assert.ok(flagged.message.startsWith('Seek assessment'));
+});
+
+interface GradeAdjustedCase {
+  input: { actualPaceSecondsPerKm: number; gradientPercent: number };
+  expected: {
+    costJoulesPerKgPerM: number;
+    costRatio: number;
+    flatEquivalentPaceSeconds: number;
+    direction: string;
+  };
+}
+
+test('grade-adjusted pace matches the published uphill case', () => {
+  const testCase = readCase<GradeAdjustedCase>('case-grade-adjusted-pace-uphill');
+  const result = gradeAdjustedPace(testCase.input);
+  assertNumber(result.costJoulesPerKgPerM, testCase.expected.costJoulesPerKgPerM, true);
+  assertNumber(result.costRatio, testCase.expected.costRatio, true);
+  assertNumber(result.flatEquivalentPaceSeconds, testCase.expected.flatEquivalentPaceSeconds, false);
+  assert.equal(result.direction, testCase.expected.direction);
+  assert.ok(result.note.includes('faster than the actual pace'));
+});
+
+test('grade-adjusted pace matches the published downhill case', () => {
+  const testCase = readCase<GradeAdjustedCase>('case-grade-adjusted-pace-downhill');
+  const result = gradeAdjustedPace(testCase.input);
+  assertNumber(result.costJoulesPerKgPerM, testCase.expected.costJoulesPerKgPerM, true);
+  assertNumber(result.costRatio, testCase.expected.costRatio, true);
+  assertNumber(result.flatEquivalentPaceSeconds, testCase.expected.flatEquivalentPaceSeconds, false);
+  assert.equal(result.direction, testCase.expected.direction);
+  assert.ok(result.note.includes('cheaper per metre'));
+});
+
+test('grade-adjusted pace treats zero gradient as neutral and rejects out-of-range input', () => {
+  const flat = gradeAdjustedPace({ actualPaceSecondsPerKm: 300, gradientPercent: 0 });
+  assertNumber(flat.costJoulesPerKgPerM, 3.6, true);
+  assertNumber(flat.costRatio, 1, true);
+  assertNumber(flat.flatEquivalentPaceSeconds, 300, false);
+  assert.equal(flat.direction, 'flat');
+
+  const steep = gradeAdjustedPace({ actualPaceSecondsPerKm: 300, gradientPercent: -30 });
+  assert.ok(steep.note.includes('Steep descent'));
+
+  assert.throws(
+    () => gradeAdjustedPace({ actualPaceSecondsPerKm: 300, gradientPercent: 46 }),
+    (error: unknown) => error instanceof GradeAdjustedPaceInputError && error.field === 'gradient',
+  );
+  assert.throws(
+    () => gradeAdjustedPace({ actualPaceSecondsPerKm: 0, gradientPercent: 5 }),
+    (error: unknown) => error instanceof GradeAdjustedPaceInputError && error.field === 'pace',
+  );
+  assert.throws(
+    () => gradeAdjustedPace({ actualPaceSecondsPerKm: Number.NaN, gradientPercent: 5 }),
+    (error: unknown) => error instanceof GradeAdjustedPaceInputError && error.code === 'not-finite',
+  );
+});
+
+test('injury risk rejects sleep hours outside the declared range', () => {
+  const testCase = readCase<InjuryRiskCase>('case-injury-risk-low');
+  assert.throws(
+    () => checkInjuryRisk({ ...testCase.input, sleepHours: 25 }),
+    (error: unknown) => error instanceof InjuryRiskInputError && error.field === 'sleep',
+  );
+  assert.throws(
+    () => checkInjuryRisk({ ...testCase.input, weeklyVolumeChangePercent: Number.NaN }),
+    (error: unknown) => error instanceof InjuryRiskInputError && error.field === 'volume',
+  );
+});
+
+test('carb-load planner matches the published marathon case', () => {
+  const testCase = readCase<{
+    input: {
+      bodyMassKg: number;
+      eventDurationMinutes: number;
+      loadWindowHours: number;
+    };
+    expected: {
+      indicated: boolean;
+      dailyLowGrams: number;
+      dailyHighGrams: number;
+      windowTotalLowGrams: number;
+      windowTotalHighGrams: number;
+    };
+  }>('case-carb-load-planner-marathon');
+  const result = planCarbLoad(testCase.input);
+  assert.equal(result.indicated, testCase.expected.indicated);
+  assertNumber(result.dailyLowGrams, testCase.expected.dailyLowGrams, false);
+  assertNumber(result.dailyHighGrams, testCase.expected.dailyHighGrams, false);
+  assertNumber(result.windowTotalLowGrams, testCase.expected.windowTotalLowGrams, false);
+  assertNumber(result.windowTotalHighGrams, testCase.expected.windowTotalHighGrams, false);
+  assert.ok(result.note.includes('indicated'));
+});
+
+test('carb-load planner flags a short race as not indicated', () => {
+  const testCase = readCase<{
+    input: {
+      bodyMassKg: number;
+      eventDurationMinutes: number;
+      loadWindowHours: number;
+    };
+    expected: {
+      indicated: boolean;
+      dailyLowGrams: number;
+      dailyHighGrams: number;
+      windowTotalLowGrams: number;
+      windowTotalHighGrams: number;
+    };
+  }>('case-carb-load-planner-short-race');
+  const result = planCarbLoad(testCase.input);
+  assert.equal(result.indicated, testCase.expected.indicated);
+  assertNumber(result.windowTotalLowGrams, testCase.expected.windowTotalLowGrams, false);
+  assertNumber(result.windowTotalHighGrams, testCase.expected.windowTotalHighGrams, false);
+  assert.ok(result.note.includes('not indicated'));
+});
+
+test('carb-load planner treats exactly 90 minutes as not indicated and rejects out-of-range input', () => {
+  const boundary = planCarbLoad({
+    bodyMassKg: 70,
+    eventDurationMinutes: 90,
+    loadWindowHours: 36,
+  });
+  assert.equal(boundary.indicated, false);
+
+  assert.throws(
+    () => planCarbLoad({ bodyMassKg: 29, eventDurationMinutes: 240, loadWindowHours: 48 }),
+    (error: unknown) => error instanceof CarbLoadPlannerInputError && error.field === 'mass',
+  );
+  assert.throws(
+    () => planCarbLoad({ bodyMassKg: 70, eventDurationMinutes: 240, loadWindowHours: 35 }),
+    (error: unknown) => error instanceof CarbLoadPlannerInputError && error.field === 'window',
+  );
+  assert.throws(
+    () => planCarbLoad({
+      bodyMassKg: 70,
+      eventDurationMinutes: Number.NaN,
+      loadWindowHours: 48,
+    }),
+    (error: unknown) => error instanceof CarbLoadPlannerInputError && error.code === 'not-finite',
+  );
+});
+
+test('sweat-rate estimate matches the one-hour case', () => {
+  const testCase = readCase<{
+    input: {
+      preWeightKg: number;
+      postWeightKg: number;
+      fluidIntakeLiters: number;
+      durationMinutes: number;
+    };
+    expected: {
+      netLossLiters: number;
+      sweatRateLitersPerHour: number;
+      bodyMassLossPercent: number;
+      aboveTwoPercent: boolean;
+    };
+  }>('case-sweat-rate-hour-run');
+  const result = estimateSweatRate(testCase.input);
+  assertNumber(result.netLossLiters, testCase.expected.netLossLiters, false);
+  assertNumber(result.sweatRateLitersPerHour, testCase.expected.sweatRateLitersPerHour, false);
+  assertNumber(result.bodyMassLossPercent, testCase.expected.bodyMassLossPercent, false);
+  assert.equal(result.aboveTwoPercent, testCase.expected.aboveTwoPercent);
+});
+
+test('sweat-rate estimate matches the ninety-minute case', () => {
+  const testCase = readCase<{
+    input: {
+      preWeightKg: number;
+      postWeightKg: number;
+      fluidIntakeLiters: number;
+      durationMinutes: number;
+    };
+    expected: {
+      netLossLiters: number;
+      sweatRateLitersPerHour: number;
+      bodyMassLossPercent: number;
+      aboveTwoPercent: boolean;
+    };
+  }>('case-sweat-rate-ninety-minutes');
+  const result = estimateSweatRate(testCase.input);
+  assertNumber(result.netLossLiters, testCase.expected.netLossLiters, false);
+  assertNumber(result.sweatRateLitersPerHour, testCase.expected.sweatRateLitersPerHour, false);
+  assertNumber(result.bodyMassLossPercent, testCase.expected.bodyMassLossPercent, false);
+  assert.equal(result.aboveTwoPercent, testCase.expected.aboveTwoPercent);
+});
+
+test('sweat-rate keeps exactly 2% below the flag and rejects inconsistent or out-of-range input', () => {
+  const boundary = estimateSweatRate({
+    preWeightKg: 70,
+    postWeightKg: 68.6,
+    fluidIntakeLiters: 0,
+    durationMinutes: 60,
+  });
+  assertNumber(boundary.netLossLiters, 1.4, false);
+  assertNumber(boundary.sweatRateLitersPerHour, 1.4, false);
+  assertNumber(boundary.bodyMassLossPercent, 2, false);
+  assert.equal(boundary.aboveTwoPercent, false);
+
+  const above = estimateSweatRate({
+    preWeightKg: 70,
+    postWeightKg: 68.4,
+    fluidIntakeLiters: 0.2,
+    durationMinutes: 60,
+  });
+  assertNumber(above.netLossLiters, 1.8, false);
+  assert.equal(above.aboveTwoPercent, true);
+
+  assert.throws(
+    () => estimateSweatRate({
+      preWeightKg: 70,
+      postWeightKg: 71,
+      fluidIntakeLiters: 0,
+      durationMinutes: 60,
+    }),
+    (error: unknown) => error instanceof SweatRateInputError && error.code === 'inconsistent',
+  );
+  assert.throws(
+    () => estimateSweatRate({
+      preWeightKg: 29,
+      postWeightKg: 28.5,
+      fluidIntakeLiters: 0,
+      durationMinutes: 60,
+    }),
+    (error: unknown) => error instanceof SweatRateInputError && error.field === 'weights',
+  );
+  assert.throws(
+    () => estimateSweatRate({
+      preWeightKg: 70,
+      postWeightKg: 69.2,
+      fluidIntakeLiters: 11,
+      durationMinutes: 60,
+    }),
+    (error: unknown) => error instanceof SweatRateInputError && error.field === 'intake',
+  );
+  assert.throws(
+    () => estimateSweatRate({
+      preWeightKg: 70,
+      postWeightKg: 69.2,
+      fluidIntakeLiters: 0.5,
+      durationMinutes: 0,
+    }),
+    (error: unknown) => error instanceof SweatRateInputError && error.field === 'duration',
+  );
+  assert.throws(
+    () => estimateSweatRate({
+      preWeightKg: 70,
+      postWeightKg: 69.2,
+      fluidIntakeLiters: 0.5,
+      durationMinutes: Number.NaN,
+    }),
+    (error: unknown) => error instanceof SweatRateInputError && error.code === 'not-finite',
+  );
 });

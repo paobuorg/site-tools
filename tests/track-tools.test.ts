@@ -254,6 +254,91 @@ test('route comparison keeps missing values unknown and produces no ranking', ()
   assert.equal(result.rows.find((row) => row.key === 'elevation')!.values[1], null);
 });
 
+test('published GPX conversion and keep-all simplification cases match', () => {
+  const casesDir = path.join(toolsRoot, 'data/cases');
+  const convertCase = JSON.parse(
+    fs.readFileSync(path.join(casesDir, 'case-track-convert-gpx.json'), 'utf8'),
+  ) as {
+    input: {
+      sourceFormat: 'gpx' | 'geojson';
+      targetFormat: 'gpx' | 'geojson';
+      coordinates: number[][];
+    };
+    expected: { segmentCount: number; pointCount: number; elevationPointCount: number };
+  };
+  const segment: Coordinate[] = convertCase.input.coordinates.map(([lon, lat, elevation]) => ({
+    lon: lon!,
+    lat: lat!,
+    elevation: elevation ?? null,
+  }));
+  const sourceText = serializeTrack([segment], convertCase.input.sourceFormat);
+  const parsedSource = parseTrackFile(
+    `case.${convertCase.input.sourceFormat}`,
+    sourceText,
+    new TextEncoder().encode(sourceText).length,
+  );
+  const targetText = serializeTrack(parsedSource.segments, convertCase.input.targetFormat);
+  const summary = parseTrackFile(
+    `case.${convertCase.input.targetFormat}`,
+    targetText,
+    new TextEncoder().encode(targetText).length,
+  );
+  assert.equal(summary.segments.length, convertCase.expected.segmentCount);
+  assert.equal(summary.segments[0]!.length, convertCase.expected.pointCount);
+  assert.equal(
+    summary.segments[0]!.filter((point) => point.elevation !== null).length,
+    convertCase.expected.elevationPointCount,
+  );
+
+  const simplifyCase = JSON.parse(
+    fs.readFileSync(path.join(casesDir, 'case-track-simplify-keep.json'), 'utf8'),
+  ) as {
+    input: { toleranceMeters: number; coordinates: number[][] };
+    expected: { originalPointCount: number; simplifiedPointCount: number; segmentCount: number };
+  };
+  const simplified = simplifyTrack(
+    [
+      simplifyCase.input.coordinates.map(([lon, lat]) => ({
+        lon: lon!,
+        lat: lat!,
+        elevation: null,
+      })),
+    ],
+    simplifyCase.input.toleranceMeters,
+  );
+  assert.equal(simplified.originalPointCount, simplifyCase.expected.originalPointCount);
+  assert.equal(simplified.simplifiedPointCount, simplifyCase.expected.simplifiedPointCount);
+  assert.equal(simplified.segments.length, simplifyCase.expected.segmentCount);
+});
+
+test('route comparison keeps recorded zero distinct from missing values', () => {
+  const casesDir = path.join(toolsRoot, 'data/cases');
+  const item = JSON.parse(
+    fs.readFileSync(path.join(casesDir, 'case-route-compare-complete.json'), 'utf8'),
+  ) as {
+    input: {
+      routes: Array<{
+        routeId: string;
+        distanceMeters: number | null;
+        elevationGainMeters: number | null;
+        surface: string | null;
+        technicality: string | null;
+      }>;
+    };
+    expected: {
+      routeCount: number;
+      rows: Array<{ key: string; values: Array<number | string | null> }>;
+      rankingProduced: boolean;
+    };
+  };
+  const result = compareRoutes(item.input.routes);
+  assert.equal(result.routeCount, item.expected.routeCount);
+  assert.deepEqual(result.rows, item.expected.rows);
+  assert.equal('ranking' in result, false);
+  assert.equal(item.expected.rankingProduced, false);
+  assert.equal(result.rows.find((row) => row.key === 'elevation')!.values[2], 0);
+});
+
 test('route comparison requires two to four distinct routes', () => {
   const base = {
     distanceMeters: 42195,

@@ -3,7 +3,7 @@ import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
 import Bean from '@paobu/core/components/Bean.astro';
 import Icon from '@paobu/core/components/Icon.astro';
 import LegalNotice from '@paobu/core/components/LegalNotice.astro';
-import type { RouteDetails } from '@paobu/core/content';
+import { describeSourceVerification, type RouteDetails } from '@paobu/core/content';
 import { contributorName, otherLocale, type Locale, LOCALES } from '@paobu/core/lib/i18n';
 import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
 import { breadcrumbList, softwareApplicationData } from '@paobu/core/lib/seo';
@@ -12,6 +12,12 @@ import FuelingPlanner from '../../../components/tools/FuelingPlanner.astro';
 import RouteElevation from '../../../components/tools/RouteElevation.astro';
 import ShoeMileage from '../../../components/tools/ShoeMileage.astro';
 import RaceChecklist from '../../../components/tools/RaceChecklist.astro';
+import TrainingLoad from '../../../components/tools/TrainingLoad.astro';
+import HeatAdjust from '../../../components/tools/HeatAdjust.astro';
+import GradeAdjustedPace from '../../../components/tools/GradeAdjustedPace.astro';
+import CarbLoadPlanner from '../../../components/tools/CarbLoadPlanner.astro';
+import SweatRate from '../../../components/tools/SweatRate.astro';
+import InjuryRiskCheck from '../../../components/tools/InjuryRiskCheck.astro';
 import { siteContent } from '../../../lib/content';
 import {
   entityHref,
@@ -39,6 +45,7 @@ if (!entity) throw new Error(`Tool ${Astro.props.entityId} is not visible`);
 const translation = content.translation(entity, locale);
 const details = toolDetails(entity);
 const sources = content.sourcesFor(entity);
+const sourceNotes = sources.map((source) => describeSourceVerification(source, locale));
 const related = content.related(entity, locale);
 const cases = content.cases.filter((item) => item.toolId === entity.entityId);
 const authors = [
@@ -62,6 +69,12 @@ const activeTool = [
   'route-elevation',
   'shoe-mileage',
   'race-checklist',
+  'training-load',
+  'heat-adjust',
+  'grade-adjusted-pace',
+  'carb-load-planner',
+  'sweat-rate',
+  'injury-risk-check',
 ].includes(entity.slug);
 const publishedRoutes = content.allEntities
   .filter((item) => item.kind === 'route' && item.status === 'published')
@@ -1127,6 +1140,12 @@ const structuredData = [
         {entity.slug === 'route-elevation' && <RouteElevation locale={locale} />}
         {entity.slug === 'shoe-mileage' && <ShoeMileage locale={locale} />}
         {entity.slug === 'race-checklist' && <RaceChecklist locale={locale} />}
+        {entity.slug === 'training-load' && <TrainingLoad locale={locale} />}
+        {entity.slug === 'heat-adjust' && <HeatAdjust locale={locale} />}
+        {entity.slug === 'grade-adjusted-pace' && <GradeAdjustedPace locale={locale} />}
+        {entity.slug === 'carb-load-planner' && <CarbLoadPlanner locale={locale} />}
+        {entity.slug === 'sweat-rate' && <SweatRate locale={locale} />}
+        {entity.slug === 'injury-risk-check' && <InjuryRiskCheck locale={locale} />}
 
         {!activeTool && (
           <div class="empty-state">
@@ -1214,10 +1233,11 @@ const structuredData = [
       <section class="tool-sources" aria-labelledby="sources-heading">
         <h2 id="sources-heading">{copy.sourcesTitle}</h2>
         <div class="source-list">
-          {sources.map((source) => (
+          {sources.map((source, index) => (
             <div class="source-item">
               <a href={source.url} rel="external noopener">{source.title} <Icon name="external" size={14} /></a>
               <p>{source.claims.join(' ')}</p>
+              {sourceNotes[index] ? <p class="source-meta source-verification">{sourceNotes[index]}</p> : null}
               <p class="source-meta">
                 {source.publisher}
                 {' · '}{copy.accessed} {formatDate(source.accessedAt, locale)}

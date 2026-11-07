@@ -8,6 +8,7 @@ loadLocalEnv();
 const { loadContent, defaultContentRoots, enrichSearchContent, expandSearchAliases } =
   await import('@paobu/core/content');
 const { writeHostingFiles, writeReleaseManifest } = await import('@paobu/core/lib/release');
+const { localePrefix } = await import('@paobu/core/lib/routing');
 const { createIndex, close } = await import('pagefind');
 
 const distDir = path.join(projectRoot, 'dist');
@@ -42,7 +43,7 @@ for (const entity of content.visible('tool')) {
       `${translation.title}\n${translation.summary}\n\n${translation.plainText}\n\n${aliasText.join(' ')}`,
     );
     records.push({
-      url: `/${locale}/tools/${entity.slug}/`,
+      url: `${localePrefix(locale)}/tools/${entity.slug}/`,
       content: body,
       language: localeLanguage[locale],
       meta: {

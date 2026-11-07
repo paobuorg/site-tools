@@ -8,25 +8,25 @@
     "data",
     "assets"
   ],
-  "generatedAt": "2026-11-06T01:41:18.567Z",
+  "generatedAt": "2026-11-07T14:05:22.227Z",
   "repositories": [
     {
       "name": "running-routes",
-      "commit": "23cb433b93d887660e7fee0bc3cb9c8706b201fe",
-      "digest": "383a0ae40621ee241ed77be8b7cbdc3383b51c9d9a9140eb96bd108066352645",
-      "fileCount": 107
+      "commit": null,
+      "digest": "f0af83704bc4f3c768605168cbfcc1d795a0027fef1788c375d4d23a045d6137",
+      "fileCount": 287
     },
     {
       "name": "running-knowledge",
-      "commit": "015a4c71e54262b935a3e7f3c9e5f899362b80aa",
-      "digest": "4dcd794785e25f91d9aedac60b053a0465b0a4aa39df32a159cbef4f596c22c4",
-      "fileCount": 297
+      "commit": null,
+      "digest": "e406e0b90e49e185d6b35798befd1300b861afb32003f9f776fd3aeb0717fc1f",
+      "fileCount": 677
     },
     {
       "name": "running-tools",
-      "commit": "3c532888f7ac23bb320145bae9d5181b6ce98a17",
-      "digest": "550f991fc61e8b46c59f68c85e911021fa9360779a6da226a777908ab139c2d9",
-      "fileCount": 94
+      "commit": null,
+      "digest": "13421b59cf3bc9c8a24562f897a17494346ecd1c394fd8f8e124021c773e3aeb",
+      "fileCount": 141
     }
   ],
   "note": "Local source-tree lock for reproducible local builds. The commit pins the content revision used for the build; README-only commits do not change this content tree."

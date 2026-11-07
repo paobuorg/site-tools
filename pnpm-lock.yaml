@@ -619,8 +619,8 @@ packages:
     os: [win32]
 
   '@paobu/core@file:vendor/paobu-core.tgz':
-    resolution: {integrity: sha512-MxsqjCf85fqku3E7IHtM4yv+Qg9V3/AJv7QdxPlIVsd7wv8XOmBTUKzsuMqXuQY81nYF8hccsjU3FPYsfibZmg==, tarball: file:vendor/paobu-core.tgz}
-    version: 0.2.18
+    resolution: {integrity: sha512-O4InBhsmQxFILfstrEC4HCcCLAXHzJx9eGXTGSoK/Oku+hB2FACUdvnm0IFrrLISJPvfSUgtELuk/WUV0+BgDg==, tarball: file:vendor/paobu-core.tgz}
+    version: 0.2.21
     peerDependencies:
       astro: ^7.0.0
 

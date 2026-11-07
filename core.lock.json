@@ -1,9 +1,8 @@
 {
   "name": "@paobu/core",
-  "version": "0.2.18",
-  "artifact": "paobu-core-0.2.18.tgz",
-  "sha256": "8aa7eed376c59ef91ffe5b2f8da4ed3cdeeee88c919db19e1954ebe2aa0f16f8",
-  "packedAt": "2026-10-29T00:23:20.152Z",
-  "source": "github-release",
-  "syncedAt": "2026-10-29T00:23:42.903Z"
+  "version": "0.2.21",
+  "source": "local-artifact",
+  "artifact": "paobu-core-0.2.21.tgz",
+  "sha256": "be08f72bfdf5972bfd083adb34cacf3b3c3daa7e613ef0134b0c792412d49344",
+  "syncedAt": "2026-11-07T14:02:54.753Z"
 }

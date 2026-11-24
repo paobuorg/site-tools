@@ -228,7 +228,9 @@ const copy = locale === 'zh-CN'
       routeVersion: '版本',
       routeOfficialGeometry: '官方轨迹',
       routeTypeRoad: '公路马拉松',
+      routeTypeRoadUltra: '公路超马',
       routeTypeTrail: '越野超马',
+      routeTypeMountain: '山地竞速',
       routeGeometryRedistributable: '可再分发',
       routeGeometryOfficial: '官方链接',
       routeGeometryUnavailable: '无公开几何',
@@ -404,7 +406,9 @@ const copy = locale === 'zh-CN'
       routeVersion: 'Version',
       routeOfficialGeometry: 'Official track',
       routeTypeRoad: 'Road marathon',
+      routeTypeRoadUltra: 'Road ultra',
       routeTypeTrail: 'Trail ultramarathon',
+      routeTypeMountain: 'Mountain race',
       routeGeometryRedistributable: 'Redistributable',
       routeGeometryOfficial: 'Official link',
       routeGeometryUnavailable: 'No public geometry',
@@ -488,7 +492,9 @@ const clientStrings = {
   routeVersion: locale === 'zh-CN' ? '版本' : 'Version',
   routeOfficialGeometry: locale === 'zh-CN' ? '官方轨迹' : 'Official track',
   routeTypeRoad: locale === 'zh-CN' ? '公路马拉松' : 'Road marathon',
+  routeTypeRoadUltra: locale === 'zh-CN' ? '公路超马' : 'Road ultra',
   routeTypeTrail: locale === 'zh-CN' ? '越野超马' : 'Trail ultramarathon',
+  routeTypeMountain: locale === 'zh-CN' ? '山地竞速' : 'Mountain race',
   routeGeometryRedistributable: locale === 'zh-CN' ? '可再分发' : 'Redistributable',
   routeGeometryOfficial: locale === 'zh-CN' ? '官方链接' : 'Official link',
   routeGeometryUnavailable: locale === 'zh-CN' ? '无公开几何' : 'No public geometry',
@@ -1049,7 +1055,13 @@ const structuredData = [
                         <strong>{route.label}</strong>
                         <small>
                           {copy.routeVersion}: {route.version} ·{' '}
-                          {route.raceType === 'road-marathon' ? copy.routeTypeRoad : copy.routeTypeTrail}
+                          {route.raceType === 'road-marathon'
+                            ? copy.routeTypeRoad
+                            : route.raceType === 'road-ultra'
+                              ? copy.routeTypeRoadUltra
+                              : route.raceType === 'trail-mountain'
+                                ? copy.routeTypeMountain
+                                : copy.routeTypeTrail}
                         </small>
                       </span>
                     </label>

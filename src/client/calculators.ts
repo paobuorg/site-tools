@@ -1164,7 +1164,7 @@ interface RouteOption {
   id: string;
   label: string;
   version: string;
-  raceType: 'road-marathon' | 'trail-ultra';
+  raceType: 'road-marathon' | 'road-ultra' | 'trail-ultra' | 'trail-mountain';
   distanceMeters: number;
   distanceMethod: string;
   elevationGainMeters: number | null;
@@ -1255,7 +1255,11 @@ function initRouteCompare(root: HTMLElement) {
         `${strings.routeVersion ?? 'Version'}: ${route.version} · ${
           route.raceType === 'road-marathon'
             ? strings.routeTypeRoad ?? 'Road marathon'
-            : strings.routeTypeTrail ?? 'Trail ultramarathon'
+            : route.raceType === 'road-ultra'
+              ? strings.routeTypeRoadUltra ?? 'Road ultra'
+              : route.raceType === 'trail-mountain'
+                ? strings.routeTypeMountain ?? 'Mountain race'
+                : strings.routeTypeTrail ?? 'Trail ultramarathon'
         }`,
       );
       headRow.appendChild(th);

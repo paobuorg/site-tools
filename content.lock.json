@@ -24,7 +24,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-11-25T02:38:00.198Z",
+  "generatedAt": "2026-11-25T07:19:36.053Z",
   "repositories": [
     {
       "name": "marathon-trail-running-races",
@@ -34,8 +34,8 @@
     },
     {
       "name": "running-handbook",
-      "commit": "1e008e39db310dfd483ba4ac159a1d5ccf821eff",
-      "digest": "564042c090a4a5d0d9f21ee1e1898c5c5b2a7ad8e00cf2017f8a7d39d24ccffd",
+      "commit": "517330fe2d97e3eaa3d44504d457f739a5334fe5",
+      "digest": "1f67aab799dc2fc62685c76f5090daf34b6cb089c90610637f04b126bf194f8e",
       "fileCount": 832
     }
   ],

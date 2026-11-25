@@ -10,8 +10,8 @@ Website project for `tools.paobu.org`: pace, splits, run-walk, race prediction, 
 - The content gate passes: **18 tool entities**, **43 tool cases**, **959 sources** (shared three-site gate scope), and **5,389 claims**.
 - Local production build: **43** static HTML pages, **40** hosting pages, **36** Pagefind records, and **40** sitemap URLs. `check:production` passes (tool=18).
 - Local QA passes: 360-page crawl, Chromium UI matrix, performance budgets, 8 fault checks, 11 track checks, 11 cross-site checks, and 18 PWA checks.
-- **The live `https://tools.paobu.org/` now serves the 2026-11-25 build**: it was built and deployed from `main` at `7d8af21`. The Chinese and English home pages, the pace calculator and other tool pages, and all 40 sitemap URLs returned 200 in the live crawl.
-- Shared core `@paobu/core@0.3.0`, artifact SHA-256 `e30e89f289ca7c4fab2a0941d6967c081af54b63741559651c2cdf6ec4a0d16e`.
+- **The live `https://tools.paobu.org/` now serves the 2026-11-25 build**: it was built and deployed from `main` at `afa1daf`. The Chinese and English home pages, the pace calculator and other tool pages, and all 40 sitemap URLs returned 200 in the live crawl.
+- Shared core `@paobu/core@0.3.3`, artifact SHA-256 `8fdc28f59aab3bdabf908a4b83a405f2c39d7130df0afbc1eca5fd15e94968ae`.
 
 ## Technical Baseline
 
@@ -19,7 +19,7 @@ Website project for `tools.paobu.org`: pace, splits, run-walk, race prediction, 
 - `output: 'static'`, trailing-slash directory output, canonical origin `https://tools.paobu.org`.
 - Calculation is client-side: pure arithmetic runs in client functions; GPX/GeoJSON parsing, geodesic distance, and simplification run in Web Workers.
 - `fast-xml-parser` 5.11.2, Pagefind 1.5.2.
-- `@paobu/core` 0.3.0 from `vendor/paobu-core.tgz`; `core.lock.json` records the same SHA-256.
+- `@paobu/core` 0.3.3 from `vendor/paobu-core.tgz`; `core.lock.json` records the same SHA-256.
 
 ## Tools and Code Locations
 
@@ -62,7 +62,7 @@ content.lock.json         Local tree lock for the two content repositories
 
 ## Local Run
 
-All six projects live under one parent directory. First ensure `paobu-core` has produced `core-dist/paobu-core-0.3.0.tgz`:
+All six projects live under one parent directory. First ensure `paobu-core` has produced `core-dist/paobu-core-0.3.3.tgz`:
 
 ```bash
 cd paobu-core

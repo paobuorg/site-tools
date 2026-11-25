@@ -10,8 +10,8 @@
 - 本站内容门禁通过：工具实体 **18**，工具算例 **43**，来源 **959**（三站共用同一内容门禁口径），claim **5,389**。
 - 本地生产构建：静态 HTML **43**，发布清单 **40** 页，Pagefind **36** 条，sitemap **40** 个 URL；`check:production` 通过（tool=18）。
 - 本地 QA 通过：360 页整站抓取、Chromium UI 矩阵、性能预算、8 项故障、11 项轨迹、11 项跨站、18 项 PWA。
-- **线上 `https://tools.paobu.org/` 已发布 2026-11-25 新版**：由本仓 `main` 的 `7d8af21` 构建并部署；中文与英文首页、配速计算器等工具页和 40 个 sitemap URL 线上均返回 200。
-- 共享核心 `@paobu/core@0.3.0`，制品 SHA-256 `e30e89f289ca7c4fab2a0941d6967c081af54b63741559651c2cdf6ec4a0d16e`。
+- **线上 `https://tools.paobu.org/` 已发布 2026-11-25 新版**：由本仓 `main` 的 `afa1daf` 构建并部署；中文与英文首页、配速计算器等工具页和 40 个 sitemap URL 线上均返回 200。
+- 共享核心 `@paobu/core@0.3.3`，制品 SHA-256 `8fdc28f59aab3bdabf908a4b83a405f2c39d7130df0afbc1eca5fd15e94968ae`。
 
 ## 技术基线
 
@@ -19,7 +19,7 @@
 - `output: 'static'`、尾斜杠目录输出，规范域名 `https://tools.paobu.org`。
 - 计算不依赖后端：纯算术在客户端函数中执行；GPX/GeoJSON 解析、测地距离与简化在 Web Worker 中执行。
 - `fast-xml-parser` 5.11.2，Pagefind 1.5.2。
-- `@paobu/core` 0.3.0，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录同一 SHA-256。
+- `@paobu/core` 0.3.3，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录同一 SHA-256。
 
 ## 工具与代码位置
 
@@ -62,7 +62,7 @@ content.lock.json         两内容仓库的本地树摘要锁
 
 ## 本地运行
 
-六个工程位于同一父目录。先确保 `paobu-core` 已生成 `core-dist/paobu-core-0.3.0.tgz`：
+六个工程位于同一父目录。先确保 `paobu-core` 已生成 `core-dist/paobu-core-0.3.3.tgz`：
 
 ```bash
 cd paobu-core

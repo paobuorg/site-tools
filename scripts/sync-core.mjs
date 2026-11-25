@@ -3,16 +3,16 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { projectRoot } from './load-env.mjs';
 
-const sourceDir = path.resolve(projectRoot, '..', 'site-www', 'core-dist');
+const sourceDir = path.resolve(projectRoot, '..', 'paobu-core', 'core-dist');
 const sourceLock = path.join(sourceDir, 'core.lock.json');
 if (!fs.existsSync(sourceLock)) {
-  throw new Error(`Missing ${sourceLock}. Run pnpm core:pack in site-www first.`);
+  throw new Error(`Missing ${sourceLock}. Run node scripts/pack-core.mjs in paobu-core first.`);
 }
 
 const lock = JSON.parse(fs.readFileSync(sourceLock, 'utf8'));
 const artifact = path.join(sourceDir, lock.artifact);
 if (!fs.existsSync(artifact)) {
-  throw new Error(`Missing core artifact ${artifact}. Run pnpm core:pack in site-www first.`);
+  throw new Error(`Missing core artifact ${artifact}. Run node scripts/pack-core.mjs in paobu-core first.`);
 }
 
 const sha256 = createHash('sha256').update(fs.readFileSync(artifact)).digest('hex');

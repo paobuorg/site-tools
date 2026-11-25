@@ -18,8 +18,8 @@ import {
 const toolsRoot = process.env.TOOLS_CONTENT_DIR
   ? path.resolve(process.env.TOOLS_CONTENT_DIR)
   : process.env.PAOBU_REPOS_DIR
-    ? path.join(process.env.PAOBU_REPOS_DIR, 'running-tools')
-    : path.resolve(import.meta.dirname, '../../running-tools');
+    ? path.join(process.env.PAOBU_REPOS_DIR, 'running-handbook', 'tools')
+    : path.resolve(import.meta.dirname, '../../running-handbook/tools');
 const casesDir = path.join(toolsRoot, 'data/cases');
 
 function readCase<T>(caseId: string): T {

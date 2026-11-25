@@ -18,7 +18,7 @@
     "check:production": "tsx scripts/check-production-content.mjs"
   },
   "dependencies": {
-    "@paobu/core": "file:vendor\\paobu-core.tgz",
+    "@paobu/core": "file:vendor/paobu-core.tgz",
     "astro": "7.4.2",
     "fast-xml-parser": "5.11.2"
   },

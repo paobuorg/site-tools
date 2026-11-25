@@ -2,23 +2,24 @@
 
 [English](README.en.md) · 中文
 
-`tools.paobu.org` 的网站工程：配速、分段、跑走结合、比赛预测、补给计划、轨迹查看与转换/简化、高程分析、鞋里程、比赛清单和路线参数比较。工具说明和契约来自 `running-tools`，共享布局与地理计算来自 `@paobu/core`，计算与文件处理代码在本仓库。
+`tools.paobu.org` 的网站工程：配速、分段、跑走结合、比赛预测、补给、碳水加载、热适应、爬坡等效配速、出汗率、训练负荷、受伤风险自查、鞋里程、比赛清单、轨迹查看/转换/简化、高程分析与路线比较。工具说明、公式、假设和算例来自 `running-handbook/tools/`；共享布局与地理计算来自 `@paobu/core`；计算与文件处理代码在本仓库。
 
 ## 当前状态
 
-- 工具站已部署到 GitHub Pages，线上地址为 `https://tools.paobu.org/`；Pages 与 HTTPS 已启用。
-- 十二项工具已于 2026-10-28 完成 **AI 辅助编辑审阅**并发布；每项有双语 `approve` 记录和匹配 contentDigest。审阅身份明确标注为 AI 辅助，不是独立专业审阅；限制见 site-www 的 [ai-review-report.md](../site-www/evidence/2026-10-28/review/ai-review-report.md)。
-- 路线比较只读取已发布路线；当前 16 条路线已发布，因此比较页有真实可选记录。
-- 本地发布准备已建立：生产构建会生成 `CNAME`、`.nojekyll`、`robots.txt`、`sitemap.xml`、`release-manifest.json`、PWA manifest、`sw.js` 与离线页；`.github/workflows/pages.yml` 已成功部署，`https://tools.paobu.org/` 已启用 HTTPS。当前 79 实体生产构建中，工具站有 31 个静态页面、发布清单 28 页、Pagefind 24 条记录、sitemap 28 个 URL；生产工具可见 12 项，`pnpm check:production` 通过。
-- T12 的轨迹慢提示、30 秒超时与取消状态已在 `site-www` 的 `pnpm qa:track` 中通过；它用挂起 Worker 和缩短计时器模拟，不代表真实低端设备的处理速度。T1 新工具的浏览器检查与 38 项单元测试通过；T1 批次与法律/文风更新已于 2026-10-28 完成；工具站新增中英文 `/legal/` 页面，工具页显示估算与本地文件法律提示。
+- **2026-11-25 本地结构调整完成**：内容源从旧 `running-tools` 改为 `running-handbook`，核心从 `site-www/packages/core` 改为独立 `paobu-core` 制品。
+- 本站内容门禁通过：工具实体 **18**，工具算例 **43**，来源 **959**（三站共用同一内容门禁口径），claim **5,389**。
+- 本地生产构建：静态 HTML **43**，发布清单 **40** 页，Pagefind **36** 条，sitemap **40** 个 URL；`check:production` 通过（tool=18）。
+- 本地 QA 通过：360 页整站抓取、Chromium UI 矩阵、性能预算、8 项故障、11 项轨迹、11 项跨站、18 项 PWA。
+- **线上 `https://tools.paobu.org/` 仍是 2026-10-29 旧版**。本轮没有推送，Pages 与线上验收未完成。
+- 共享核心 `@paobu/core@0.3.0`，制品 SHA-256 `e30e89f289ca7c4fab2a0941d6967c081af54b63741559651c2cdf6ec4a0d16e`。
 
 ## 技术基线
 
 - Node.js `>=22.23.4 <25`，pnpm 10.18.3，Astro 7.4.2，TypeScript 5.9.3。
-- `output: 'static'`、尾斜杠目录输出，规范域名为 `https://tools.paobu.org`。
+- `output: 'static'`、尾斜杠目录输出，规范域名 `https://tools.paobu.org`。
 - 计算不依赖后端：纯算术在客户端函数中执行；GPX/GeoJSON 解析、测地距离与简化在 Web Worker 中执行。
 - `fast-xml-parser` 5.11.2，Pagefind 1.5.2。
-- `@paobu/core` 0.2.18，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录制品 SHA-256 `8aa7eed376c59ef91ffe5b2f8da4ed3cdeeee88c919db19e1954ebe2aa0f16f8`。
+- `@paobu/core` 0.3.0，来自 `vendor/paobu-core.tgz`；`core.lock.json` 记录同一 SHA-256。
 
 ## 工具与代码位置
 
@@ -29,75 +30,88 @@
 | 跑走结合 `run-walk` | `src/lib/calculators.ts`，循环与总时长排程 |
 | 比赛预测 `race-predict` | `src/lib/calculators.ts`，Riegel 1.06，距离 5000–42195 米 |
 | 补给计划 `fueling-planner` | `src/lib/fueling.ts`，按小时 30–60g 范围与产品份数换算 |
-| 高程分析 `route-elevation` | `src/lib/elevation.ts`、`src/workers/elevation.worker.ts`，累计升降与坡度 |
+| 碳水加载 `carb-load-planner` | `src/lib/fueling.ts`，按体重与天数估算 |
+| 热适应 `heat-adjust` | `src/lib/heat-adjust.ts`，温度与湿度修正 |
+| 爬坡等效配速 `grade-adjusted-pace` | `src/lib/grade-adjusted-pace.ts`，坡度换算 |
+| 出汗率 `sweat-rate` | `src/lib/fueling.ts`，称重差与补液 |
+| 训练负荷 `training-load` | `src/lib/training-load.ts`，时长与强度系数 |
+| 受伤风险自查 `injury-risk-check` | `src/lib/injury-risk-check.ts`，问卷式风险提示 |
 | 鞋里程 `shoe-mileage` | `src/lib/shoe-mileage.ts`，初始里程、累计里程与用户自设提醒 |
 | 比赛清单 `race-checklist` | `src/lib/race-checklist.ts`，按天气、地形、时长和旅行条件生成条目 |
 | 轨迹查看 `track-view` | `src/lib/parse-track.ts`、`src/lib/track.ts`、`src/workers/track.worker.ts` |
 | 格式转换 `track-convert` | `src/lib/parse-track.ts`、`src/lib/serialize-track.ts`、`src/workers/transform.worker.ts` |
 | 轨迹简化 `track-simplify` | `src/lib/simplify-track.ts`、`src/workers/transform.worker.ts` |
+| 高程分析 `route-elevation` | `src/lib/elevation.ts`、`src/workers/elevation.worker.ts`，累计升降与坡度 |
 | 路线比较 `route-compare` | `src/lib/route-compare.ts`，只读取已发布路线字段 |
 
-`src/client/calculators.ts`、`src/client/fueling.ts`、`src/client/route-elevation.ts`、`src/client/shoe-mileage.ts` 与 `src/client/race-checklist.ts` 负责表单、错误提示、进度、取消、下载和结果渲染；`src/pages/[...locale]/tools/[slug].astro` 负责工具页结构与双语文案。公式描述、假设、舍入和算例在内容仓库，不在本仓库重复维护。
+`src/client/` 负责表单、错误提示、进度、取消、下载和结果渲染；`src/pages/[...locale]/tools/[slug].astro` 负责工具页结构与双语文案。公式描述、假设、舍入和算例在内容仓库，不在本仓库重复维护。
+
+## 目录
+
+```text
+src/pages/                [...locale] 首页、工具详情、搜索与 404
+src/lib/                  计算、轨迹解析、序列化、简化、高程与路线比较
+src/client/               表单、错误、进度、取消、下载与结果渲染
+src/workers/              GPX/GeoJSON 解析、变换与高程 Worker
+scripts/sync-core.mjs     从 ../paobu-core/core-dist 校验并同步核心 tgz
+scripts/postbuild.mjs     Pagefind 索引与静态输出检查
+vendor/paobu-core.tgz     锁定的核心制品（gitignore，安装前由 core:sync 重建）
+core.lock.json            核心制品版本与 SHA-256
+content.lock.json         两内容仓库的本地树摘要锁
+```
 
 ## 本地运行
 
-六个工程应位于同一父目录。共享核心由 `site-www` 打包，本仓库只同步和安装制品：
+六个工程位于同一父目录。先确保 `paobu-core` 已生成 `core-dist/paobu-core-0.3.0.tgz`：
 
 ```bash
-# 先确保 site-www 已生成 core-dist/paobu-core-<version>.tgz
-cd site-tools
-pnpm core:sync
+cd paobu-core
+node scripts/pack-core.mjs
+
+cd ../site-tools
+node scripts/sync-core.mjs
 pnpm install
-pnpm test
 pnpm test:content
 pnpm check
+pnpm test
 pnpm build
 pnpm dev
 ```
 
-- 开发：`http://localhost:4323`，语言入口 `/` 与 `/en/`。
-- 预览构建：`pnpm preview`，`http://localhost:4423`。构建时跨站链接按实际加载的 `.env` 生成（当前指向开发端口），验证跳转需同时运行对应站点；生产构建必须显式覆盖三个来源，否则 `.env` 的 localhost 会进入 HTML。
-- 单元测试：`pnpm test`（`tsx --test tests/*.ts`），当前 38 项，覆盖配速/分段/跑走/预测、轨迹解析/转换/简化、路线比较、补给、高程、鞋里程和比赛清单。
-- 生产模式：`PREVIEW_UNREVIEWED=0 pnpm build` 生成发布文件；`pnpm check:production` 当前通过（12 个工具已发布）。
+- 开发：`http://localhost:4323`。
+- 预览构建：`pnpm preview`，`http://localhost:4423`。
 - 内容校验：`pnpm test:content`。
-- 类型与 Astro 检查：`pnpm check`。
-- 构建：`pnpm build` 执行 Astro 静态构建和 Pagefind 后处理。
+- 类型检查：`pnpm check`。
+- 单元测试：`pnpm test`，覆盖计算器、轨迹解析/序列化/简化、高程、路线比较与工具契约。
 
-核心升级流程：在 `site-www` 运行 `pnpm core:pack`，在此运行 `pnpm core:sync && pnpm install --force`，确认 `core.lock.json` 与安装版本一致。不要改用 `workspace:*`，也不要复制 `packages/core` 源码。
-
-内容目录可用 `PAOBU_REPOS_DIR` 指向父目录，或用 `TOOLS_CONTENT_DIR` 覆盖。生产构建必须确保实际生效的环境文件中 `PREVIEW_UNREVIEWED=0` 或未设置；本地 `.env` 当前为 `1`，发布前应修改或移除。
-
-## 浏览器边界
-
-- 轨迹文件只在本地读取，不上传、不写分析日志、不进入仓库。
-- 单文件最多 20,000,000 字节、200,000 个坐标点；超限直接拒绝，不截断后继续。
-- 解析与几何计算在 Worker 中执行；超过 10 秒显示可取消提示，超过 30 秒终止，不提供不完整下载。
-- 拒绝 DTD、外部实体、非线几何、无效坐标与非有限数值。
-- 转换会重新序列化几何并移除时间、设备与人员元数据；缺少高程保持缺失。
-- 简化逐段执行，不连接分段；容差在局部投影平面内计算，与输出的 WGS84 距离变化分开报告。
-- 路线比较只读取已发布路线，缺失字段显示未知，不生成安全、难度或适配性排名。
-
-## 内容锁
-
-在交接包根目录运行：
+生产构建需显式设置三站来源与审阅开关：
 
 ```bash
-node scripts/content-lock.mjs          # 重新生成三个站点的 content.lock.json
-node scripts/content-lock.mjs --verify # 校验内容树未变化
+PUBLIC_ROUTES_ORIGIN=https://paobu.org \
+PUBLIC_KNOWLEDGE_ORIGIN=https://learn.paobu.org \
+PUBLIC_TOOLS_ORIGIN=https://tools.paobu.org \
+PREVIEW_UNREVIEWED=0 pnpm build
+pnpm check:production
 ```
 
-`sha256-tree-v1` 覆盖三个内容仓库的 `content/`、`data/` 和 `assets/`。锁中的 `commit` 已固定为完整 SHA：`running-routes` `0cd00cda…`、`running-knowledge` `a879da16…`、`running-tools` `4a8a3885…`。锁用于本地可复现构建，不代替 Git。
+## 共享核心与内容锁
 
-## 外部配置与发布边界
+核心源码只在 `paobu-core` 维护。修改后在该仓运行 `node scripts/pack-core.mjs`，再在本仓运行 `node scripts/sync-core.mjs && pnpm install`。三站必须使用同一版本与 SHA-256；旧 tgz 保留用于回滚。
 
-- 工具在浏览器本地工作，不需要服务端运行时、数据库或第三方计算 API。
-- 跨子域链接使用 `PUBLIC_ROUTES_ORIGIN`、`PUBLIC_KNOWLEDGE_ORIGIN` 与 `PUBLIC_TOOLS_ORIGIN`；生产默认值在核心中，本地 `.env` 指向三个本地端口。
-- GitHub 仓库、DNS 与 Pages 已配置：六个仓库位于 `paobuorg`，三站 Pages 已上线并启用 HTTPS。本仓库工作流使用 `PAOBU_CORE_ARTIFACT_URL`、`PAOBU_CORE_SHA256` 仓库变量；品牌/豆客批次线上工具站与详情页已验证，证据见 site-www 的 [remote-status.json](../site-www/evidence/2026-10-28/release/remote-status.json)。
+内容锁由交接包根目录的 `node scripts/content-lock.mjs` 生成，覆盖 `marathon-trail-running-races` 的 `content/`、`data/`、`assets/` 与 `running-handbook` 的 `knowledge/{content,data,assets}`、`tools/{content,data,assets}`。当前锁到路线仓 `7cc63ab7…`、handbook `1e008e39…`。
+
+## 计算与隐私边界
+
+- 所有计算在浏览器本地完成，不上传 GPX/GeoJSON 或输入数据；轨迹文件只在当前会话与 Worker 中处理，不写入服务器。
+- 工具结果只是估算，不构成医疗、训练或比赛指挥建议；页面显示适用条件、舍入与失败边界。
+- 受伤风险自查不提供诊断；出现急症信号应就医。
+- 预览构建可显示未审阅横幅；生产构建必须 `PREVIEW_UNREVIEWED=0`。
+- 线上仍是旧版；新仓名尚未在 `paobuorg` 创建，本机凭据没有 push 权限。不能把本地构建通过写成线上已发布。
 
 ## 许可
 
 - 网站代码：MIT。
-- 工具说明与算例：`running-tools` 仓库许可；新写说明为 CC BY 4.0。
-- 公式来源、标准与论文保留各自权利，按来源页面引用。
+- 工具内容：`running-handbook` 仓库许可，新写正文为 CC BY 4.0。
+- 第三方依赖与字体保留各自许可。
 
-最后核对日期：2026-10-28。
+最后核对日期：2026-11-25。

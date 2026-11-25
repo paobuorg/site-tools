@@ -1,103 +1,117 @@
 # RUNUP Tools · site-tools
 
-[中文](README.md) · English
+English · [中文](README.md)
 
-The site project for `tools.paobu.org`: pace, splits, run-walk, race prediction, fueling, track view and conversion/simplification, elevation analysis, shoe mileage, race checklist, and route-field comparison. Tool documentation and contracts come from `running-tools`, shared layouts and geodesic helpers from `@paobu/core`, and the calculation and file-handling code lives here.
+Website project for `tools.paobu.org`: pace, splits, run-walk, race prediction, fueling, carb loading, heat adjustment, grade-adjusted pace, sweat rate, training load, injury-risk self-check, shoe mileage, race checklist, track view/conversion/simplification, elevation analysis, and route comparison. Tool documentation, formulas, assumptions, and cases come from `running-handbook/tools/`; shared layouts and geodesic helpers come from `@paobu/core`; calculation and file-handling code lives here.
 
-## Status
+## Current State
 
-- The tools site is deployed on GitHub Pages at `https://tools.paobu.org/`; Pages and HTTPS are enabled.
-- All twelve tools were **AI-assisted editorially reviewed** and published on 2026-10-28; each has bilingual `approve` records and matching contentDigests. The reviewer is explicitly labelled AI-assisted, not independent professional review; limitations are in [ai-review-report.md](../site-www/evidence/2026-10-28/review/ai-review-report.md).
-- Route comparison reads published routes only. Sixteen routes are currently published, so the page has real selectable records.
-- Local release preparation exists: production builds emit `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`, `release-manifest.json`, the PWA manifest, `sw.js` and an offline page. The Pages workflow has deployed successfully and `https://tools.paobu.org/` enforces HTTPS. In the current 79-entity production build the tools site has 31 static pages, 28 manifest pages, 24 Pagefind records and 28 sitemap URLs. Production shows 12 tools and `pnpm check:production` passes.
-- The T12 slow hint, 30s timeout and cancel state pass in `site-www` via `pnpm qa:track`; the check uses a hanging Worker and shortened timers, not a physical low-end device. Browser checks and 38 unit tests cover the new T1 tools; the T1 batch and the legal/tone update were completed on 2026-10-28; the tools site now has bilingual `/legal/` pages and tool-level estimate/local-file legal notices.
+- **The local repository restructure was completed on 2026-11-25.** The content source moved from the old `running-tools` to `running-handbook`, and the core moved from `site-www/packages/core` to the standalone `paobu-core` artifact.
+- The content gate passes: **18 tool entities**, **43 tool cases**, **959 sources** (shared three-site gate scope), and **5,389 claims**.
+- Local production build: **43** static HTML pages, **40** hosting pages, **36** Pagefind records, and **40** sitemap URLs. `check:production` passes (tool=18).
+- Local QA passes: 360-page crawl, Chromium UI matrix, performance budgets, 8 fault checks, 11 track checks, 11 cross-site checks, and 18 PWA checks.
+- **The live `https://tools.paobu.org/` is still the 2026-10-29 build.** Nothing was pushed in this round; Pages deployment and live acceptance are not complete.
+- Shared core `@paobu/core@0.3.0`, artifact SHA-256 `e30e89f289ca7c4fab2a0941d6967c081af54b63741559651c2cdf6ec4a0d16e`.
 
-## Technical baseline
+## Technical Baseline
 
 - Node.js `>=22.23.4 <25`, pnpm 10.18.3, Astro 7.4.2, TypeScript 5.9.3.
-- `output: 'static'` with directory-style trailing slashes; canonical origin `https://tools.paobu.org`.
-- No backend is needed for calculation: arithmetic runs in client functions; GPX/GeoJSON parsing, geodesic distance and simplification run in Web Workers.
+- `output: 'static'`, trailing-slash directory output, canonical origin `https://tools.paobu.org`.
+- Calculation is client-side: pure arithmetic runs in client functions; GPX/GeoJSON parsing, geodesic distance, and simplification run in Web Workers.
 - `fast-xml-parser` 5.11.2, Pagefind 1.5.2.
-- `@paobu/core` 0.2.18, installed from `vendor/paobu-core.tgz`; `core.lock.json` records artifact SHA-256 `8aa7eed376c59ef91ffe5b2f8da4ed3cdeeee88c919db19e1954ebe2aa0f16f8`.
+- `@paobu/core` 0.3.0 from `vendor/paobu-core.tgz`; `core.lock.json` records the same SHA-256.
 
-## Tools and code locations
+## Tools and Code Locations
 
 | Tool | Main implementation |
 |---|---|
 | Pace `pace` | `src/lib/calculators.ts`, three modes and unit conversion |
 | Splits `splits` | `src/lib/calculators.ts`, even/negative splits and largest-remainder allocation |
-| Run-walk `run-walk` | `src/lib/calculators.ts`, cycle and duration scheduling |
-| Race prediction `race-predict` | `src/lib/calculators.ts`, Riegel 1.06 over 5000–42195 m |
-| Fueling planner `fueling-planner` | `src/lib/fueling.ts`, 30–60 g/h range and product-serving arithmetic |
-| Elevation `route-elevation` | `src/lib/elevation.ts`, `src/workers/elevation.worker.ts`, gain/loss and grade |
-| Shoe mileage `shoe-mileage` | `src/lib/shoe-mileage.ts`, initial/logged distance and a user-set reminder |
-| Race checklist `race-checklist` | `src/lib/race-checklist.ts`, rules for weather, terrain, duration and travel |
+| Run-walk `run-walk` | `src/lib/calculators.ts`, cycle and total-duration scheduling |
+| Race prediction `race-predict` | `src/lib/calculators.ts`, Riegel 1.06, 5000–42195 m |
+| Fueling `fueling-planner` | `src/lib/fueling.ts`, hourly 30–60 g range and product servings |
+| Carb loading `carb-load-planner` | `src/lib/carb-load-planner.ts`, body-weight and day-based estimate |
+| Heat adjustment `heat-adjust` | `src/lib/heat-adjust.ts`, temperature and humidity adjustment |
+| Grade-adjusted pace `grade-adjusted-pace` | `src/lib/grade-adjusted-pace.ts`, grade conversion |
+| Sweat rate `sweat-rate` | `src/lib/sweat-rate.ts`, weight change and fluid replacement |
+| Training load `training-load` | `src/lib/training-load.ts`, duration and intensity factor |
+| Injury-risk self-check `injury-risk-check` | `src/lib/injury-risk-check.ts`, questionnaire-style risk notice |
+| Shoe mileage `shoe-mileage` | `src/lib/shoe-mileage.ts`, starting mileage, cumulative mileage, user threshold |
+| Race checklist `race-checklist` | `src/lib/race-checklist.ts`, weather, terrain, duration, and travel conditions |
 | Track view `track-view` | `src/lib/parse-track.ts`, `src/lib/track.ts`, `src/workers/track.worker.ts` |
-| Format conversion `track-convert` | `src/lib/parse-track.ts`, `src/lib/serialize-track.ts`, `src/workers/transform.worker.ts` |
+| Track conversion `track-convert` | `src/lib/parse-track.ts`, `src/lib/serialize-track.ts`, `src/workers/transform.worker.ts` |
 | Track simplification `track-simplify` | `src/lib/simplify-track.ts`, `src/workers/transform.worker.ts` |
-| Route comparison `route-compare` | `src/lib/route-compare.ts`, published route fields only |
+| Elevation `route-elevation` | `src/lib/elevation.ts`, `src/workers/elevation.worker.ts`, cumulative gain/loss and grade |
+| Route comparison `route-compare` | `src/lib/route-compare.ts`, reads published route fields only |
 
-`src/client/calculators.ts`, `src/client/fueling.ts`, `src/client/route-elevation.ts`, `src/client/shoe-mileage.ts` and `src/client/race-checklist.ts` own forms, errors, progress, cancellation, downloads and result rendering. `src/pages/[...locale]/tools/[slug].astro` owns page structure and bilingual copy. Formula descriptions, assumptions, rounding and cases live in the content repository and are not duplicated here.
+`src/client/` handles forms, error messages, progress, cancellation, downloads, and result rendering; `src/pages/[...locale]/tools/[slug].astro` handles tool-page structure and bilingual copy. Formula descriptions, assumptions, rounding, and cases live in the content repository and are not duplicated here.
 
-## Local use
+## Layout
 
-The six projects should sit in the same parent directory. The shared core is packed by `site-www`; this repository only syncs and installs the artifact:
+```text
+src/pages/                [...locale] home, tool detail, search, and 404
+src/lib/                  Calculation, track parsing, serialization, simplification, elevation, route comparison
+src/client/               Forms, errors, progress, cancellation, downloads, result rendering
+src/workers/              GPX/GeoJSON parsing, transforms, and elevation workers
+scripts/sync-core.mjs     Verifies and syncs the core tgz from ../paobu-core/core-dist
+scripts/postbuild.mjs     Pagefind index and static output checks
+vendor/paobu-core.tgz     Locked core artifact (gitignored; rebuilt by core:sync before install)
+core.lock.json            Core artifact version and SHA-256
+content.lock.json         Local tree lock for the two content repositories
+```
+
+## Local Run
+
+All six projects live under one parent directory. First ensure `paobu-core` has produced `core-dist/paobu-core-0.3.0.tgz`:
 
 ```bash
-# Requires site-www to have produced core-dist/paobu-core-<version>.tgz
-cd site-tools
-pnpm core:sync
+cd paobu-core
+node scripts/pack-core.mjs
+
+cd ../site-tools
+node scripts/sync-core.mjs
 pnpm install
-pnpm test
 pnpm test:content
 pnpm check
+pnpm test
 pnpm build
 pnpm dev
 ```
 
-- Development: `http://localhost:4323`, with `/` and `/en/` entry points.
-- Built preview: `pnpm preview`, `http://localhost:4423`. Cross-site links are baked from the `.env` that is actually loaded (currently the development ports), so following them locally also needs those sites running; a production build must explicitly override all three origins, otherwise localhost values enter the HTML.
-- Unit tests: `pnpm test` (`tsx --test tests/*.ts`), currently 38 tests covering pace/splits/run-walk/prediction, track parsing/conversion/simplification, route comparison, fueling, elevation, shoe mileage and the checklist.
+- Development: `http://localhost:4323`.
+- Preview build: `pnpm preview`, `http://localhost:4423`.
 - Content validation: `pnpm test:content`.
-- Type and Astro checks: `pnpm check`.
-- Build: `pnpm build` runs the Astro static build and then Pagefind.
-- Production mode: `PREVIEW_UNREVIEWED=0 pnpm build` emits the release files; `pnpm check:production` currently passes with all twelve tools published.
+- Type check: `pnpm check`.
+- Unit tests: `pnpm test`, covering calculators, track parsing/serialization/simplification, elevation, route comparison, and tool contracts.
 
-Core upgrade: run `pnpm core:pack` in `site-www`, then `pnpm core:sync && pnpm install --force` here, and confirm that `core.lock.json` matches the installed version. Do not switch to `workspace:*` and do not copy `packages/core` source.
-
-Content directories can be relocated with `PAOBU_REPOS_DIR`, or overridden with `TOOLS_CONTENT_DIR`. A production build must have `PREVIEW_UNREVIEWED=0` or unset in the environment file that is actually loaded. The local `.env` currently sets `1`; change or remove it before release.
-
-## Browser boundaries
-
-- Track files are read locally. They are not uploaded, written to analytics logs or committed.
-- One file may contain at most 20,000,000 bytes and 200,000 points. Larger input is rejected rather than truncated.
-- Parsing and geometry work run in a Worker. After 10 seconds the interface offers cancellation; after 30 seconds the job is terminated and no incomplete download is offered.
-- DTDs, external entities, non-line geometry, invalid coordinates and non-finite numbers are rejected.
-- Conversion re-serializes geometry and strips timestamps, device and personal metadata. Missing elevation stays missing.
-- Simplification runs per segment and never joins segments. Tolerance is measured in a local projected plane; the resulting WGS84 distance change is reported separately.
-- Route comparison uses published routes only, shows missing fields as unknown and produces no safety, difficulty or suitability ranking.
-
-## Content locks
-
-From the handoff root:
+Production builds must set the three origins and the review switch explicitly:
 
 ```bash
-node scripts/content-lock.mjs          # regenerate content.lock.json for all three sites
-node scripts/content-lock.mjs --verify # check that the content trees are unchanged
+PUBLIC_ROUTES_ORIGIN=https://paobu.org \
+PUBLIC_KNOWLEDGE_ORIGIN=https://learn.paobu.org \
+PUBLIC_TOOLS_ORIGIN=https://tools.paobu.org \
+PREVIEW_UNREVIEWED=0 pnpm build
+pnpm check:production
 ```
 
-The `sha256-tree-v1` lock covers `content/`, `data/` and `assets/` in all three content repositories. Each lock pins a full commit SHA: `running-routes` `0cd00cda…`, `running-knowledge` `a879da16…`, `running-tools` `4a8a3885…`. The lock supports reproducible local builds and does not replace version control.
+## Shared Core and Content Lock
 
-## External configuration and release boundary
+Core source changes only in `paobu-core`. After `node scripts/pack-core.mjs` there, run `node scripts/sync-core.mjs && pnpm install` here. All three sites must use the same version and SHA-256; keep older tgz artifacts for rollback.
 
-- The tools work locally in the browser and need no server runtime, database or third-party calculation API.
-- Cross-site links use `PUBLIC_ROUTES_ORIGIN`, `PUBLIC_KNOWLEDGE_ORIGIN` and `PUBLIC_TOOLS_ORIGIN`; production defaults live in the core and the local `.env` points to the three local ports.
-- GitHub repositories, DNS and Pages are configured: the six repositories live under `paobuorg`, and all three sites are live on custom domains with HTTPS. This workflow uses the `PAOBU_CORE_ARTIFACT_URL` and `PAOBU_CORE_SHA256` repository variables. The brand/Douke release is verified live on the tools home and detail pages; evidence is in the site-www [remote-status.json](../site-www/evidence/2026-10-28/release/remote-status.json).
+The content lock is generated by `node scripts/content-lock.mjs` at the handoff root and covers `marathon-trail-running-races` (`content/`, `data/`, `assets/`) and `running-handbook` (`knowledge/{content,data,assets}`, `tools/{content,data,assets}`). It currently pins route repo `7cc63ab7…` and handbook `1e008e39…`.
 
-## Licence
+## Calculation and Privacy Scope
 
-- Site code: MIT.
-- Tool documentation and cases: under the `running-tools` repository licence; new documentation is CC BY 4.0.
-- Formula sources, standards and papers keep their own terms and are cited from their source pages.
+- All calculations run in the browser; GPX/GeoJSON files and inputs are not uploaded. Track files stay in the current session and Worker and are not written to a server.
+- Results are estimates, not medical, coaching, or race-direction advice; pages show applicability, rounding, and failure boundaries.
+- The injury-risk self-check does not diagnose; emergency signals require medical care.
+- Preview builds may show the unreviewed banner; production builds must use `PREVIEW_UNREVIEWED=0`.
+- The live site is still the old build; the new repository names have not been created under `paobuorg`, and the local credential has no push permission. Local build success must not be described as a live release.
 
-Last checked: 2026-10-28.
+## License
+
+- Website code: MIT.
+- Tool content: `running-handbook` repository license; newly written prose is CC BY 4.0.
+- Third-party dependencies and fonts retain their own licenses.
+
+Last reviewed: 2026-11-25.

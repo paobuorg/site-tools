@@ -34,25 +34,18 @@ jobs:
       - name: Checkout site-tools
         uses: actions/checkout@v4
 
-      - name: Checkout running-routes
+      - name: Checkout marathon-trail-running-races
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/running-routes
-          path: content-repos/running-routes
+          repository: ${{ github.repository_owner }}/marathon-trail-running-races
+          path: content-repos/marathon-trail-running-races
           token: ${{ secrets.PAOBU_CONTENT_TOKEN || github.token }}
 
-      - name: Checkout running-knowledge
+      - name: Checkout running-handbook
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/running-knowledge
-          path: content-repos/running-knowledge
-          token: ${{ secrets.PAOBU_CONTENT_TOKEN || github.token }}
-
-      - name: Checkout running-tools
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/running-tools
-          path: content-repos/running-tools
+          repository: ${{ github.repository_owner }}/running-handbook
+          path: content-repos/running-handbook
           token: ${{ secrets.PAOBU_CONTENT_TOKEN || github.token }}
 
       - name: Set up pnpm
@@ -70,7 +63,7 @@ jobs:
         shell: bash
         run: |
           if [ -z "$PAOBU_CORE_ARTIFACT_URL" ] || [ -z "$PAOBU_CORE_SHA256" ]; then
-            echo "Set repository variables PAOBU_CORE_ARTIFACT_URL and PAOBU_CORE_SHA256 from the site-www core release."
+            echo "Set repository variables PAOBU_CORE_ARTIFACT_URL and PAOBU_CORE_SHA256 from the paobu-core release."
             exit 1
           fi
           mkdir -p vendor

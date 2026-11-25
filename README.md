@@ -30,7 +30,7 @@
 | 跑走结合 `run-walk` | `src/lib/calculators.ts`，循环与总时长排程 |
 | 比赛预测 `race-predict` | `src/lib/calculators.ts`，Riegel 1.06，距离 5000–42195 米 |
 | 补给计划 `fueling-planner` | `src/lib/fueling.ts`，按小时 30–60g 范围与产品份数换算 |
-| 碳水加载 `carb-load-planner` | `src/lib/fueling.ts`，按体重与天数估算 |
+| 碳水加载 `carb-load-planner` | `src/lib/carb-load-planner.ts`，按体重与天数估算 |
 | 热适应 `heat-adjust` | `src/lib/heat-adjust.ts`，温度与湿度修正 |
 | 爬坡等效配速 `grade-adjusted-pace` | `src/lib/grade-adjusted-pace.ts`，坡度换算 |
 | 出汗率 `sweat-rate` | `src/lib/fueling.ts`，称重差与补液 |

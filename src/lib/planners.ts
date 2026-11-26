@@ -581,6 +581,78 @@ function recoveryPlanner(input: Record<string, PlannerValue>): PlannerOutput {
   };
 }
 
+function altitudeAcclimationPlanner(input: Record<string, PlannerValue>): PlannerOutput {
+  const raceAltitude = ranged(input.raceAltitudeMeters, 'Race altitude', 0, 5000);
+  const raceDate = isoDay(input.raceDate, 'Race date');
+  const arrivalDays = ranged(input.arrivalDaysBefore, 'Arrival days before', 0, 30);
+  const currentAltitude = ranged(input.currentAltitudeMeters ?? 0, 'Current altitude', 0, 5000);
+  const recommendedArrivalDays = raceAltitude <= 1500 ? 1 : raceAltitude <= 2500 ? 2 : raceAltitude <= 3500 ? 7 : 10;
+  const stagingAltitudeMeters = raceAltitude <= 1500 ? 0 : Math.min(3000, Math.round((raceAltitude * 0.65) / 100) * 100);
+  const ratio = arrivalDays / recommendedArrivalDays;
+  const riskBand = ratio >= 1 ? 'low' : ratio >= 0.5 ? 'moderate' : 'high';
+  const offsets = [...new Set([-arrivalDays, -Math.ceil(arrivalDays / 2), -3, -1, 0])]
+    .filter((offset) => offset >= -arrivalDays)
+    .sort((a, b) => a - b);
+  const plan = offsets.map((offset) => {
+    let altitudeMeters = currentAltitude;
+    let phase = 'stay-low';
+    if (offset === 0) {
+      altitudeMeters = raceAltitude;
+      phase = 'race';
+    } else if (offset === -arrivalDays && stagingAltitudeMeters > 0) {
+      altitudeMeters = stagingAltitudeMeters;
+      phase = 'stage';
+    } else if (offset >= -2) {
+      altitudeMeters = raceAltitude;
+      phase = 'move-up';
+    } else if (offset >= -Math.ceil(arrivalDays / 2)) {
+      altitudeMeters = stagingAltitudeMeters;
+      phase = 'stage';
+    }
+    return { date: dayString(addDays(raceDate, offset)), altitudeMeters, phase };
+  });
+  const warnings: string[] = [];
+  if (arrivalDays < recommendedArrivalDays) warnings.push(`Arrival is ${recommendedArrivalDays - arrivalDays} days shorter than the planning reference; treat the first race hours as acclimatisation, not a personal best attempt.`);
+  if (raceAltitude >= 3500) warnings.push('Above 3,500 m, descent is the primary treatment for altitude illness; do not use this plan as a substitute for medical advice.');
+  if (currentAltitude >= raceAltitude) warnings.push('You are already at or above race altitude; the staging plan is not needed, but fatigue and dehydration still matter.');
+  return {
+    recommendedArrivalDays,
+    stagingAltitudeMeters,
+    riskBand,
+    plan,
+    warning: warnings.length ? warnings.join(' ') : null,
+  };
+}
+
+function trailVerticalPacingPlanner(input: Record<string, PlannerValue>): PlannerOutput {
+  const distanceKm = ranged(input.distanceKm, 'Distance', 0.1, 500);
+  const climbMeters = ranged(input.climbMeters, 'Climb', 0, 30000);
+  const descentMeters = ranged(input.descentMeters, 'Descent', 0, 30000);
+  const targetHours = ranged(input.targetHours, 'Target time', 0.25, 60);
+  const technicality = String(input.technicality ?? 'medium');
+  if (!['low', 'medium', 'high'].includes(technicality)) throw new PlannerError('Technicality: choose low, medium or high.');
+  const descentFactor = technicality === 'high' ? 0.8 : technicality === 'medium' ? 0.5 : 0.3;
+  const equivalentDistanceKm = distanceKm + climbMeters / 100 + (descentMeters * descentFactor) / 100;
+  const targetSeconds = targetHours * 3600;
+  const targetPaceSecondsPerKm = Math.round(targetSeconds / equivalentDistanceKm);
+  const flatPaceSecondsPerKm = Math.round(targetSeconds / distanceKm);
+  const requiredClimbRateMPerHour = Math.round(climbMeters / targetHours);
+  const verdict = requiredClimbRateMPerHour > 1200 || targetPaceSecondsPerKm > 600 ? 'infeasible' : requiredClimbRateMPerHour > 800 || targetPaceSecondsPerKm > 480 ? 'at-risk' : 'feasible';
+  const warnings: string[] = [];
+  if (requiredClimbRateMPerHour > 1200) warnings.push('Required climb rate exceeds the usual sustainable range; add time or shorten the course.');
+  if (targetPaceSecondsPerKm > 600) warnings.push('Equivalent pace is slower than 10:00/km; check that the target time includes aid stations and technical sections.');
+  if (technicality === 'high') warnings.push('High technicality adds descent time and attention load; use the slower end of your own descent calibration.');
+  return {
+    equivalentDistanceKm: round1(equivalentDistanceKm),
+    targetPaceSecondsPerKm,
+    flatPaceSecondsPerKm,
+    requiredClimbRateMPerHour,
+    descentPenaltySeconds: Math.round(((descentMeters * descentFactor) / 100 / equivalentDistanceKm) * targetSeconds),
+    verdict,
+    warning: warnings.length ? warnings.join(' ') : null,
+  };
+}
+
 const calculators: Record<string, (input: Record<string, PlannerValue>) => PlannerOutput> = {
   'cutoff-planner': cutoffPlanner,
   'crew-pacer-plan': crewPacerPlan,
@@ -594,6 +666,8 @@ const calculators: Record<string, (input: Record<string, PlannerValue>) => Plann
   'race-travel-planner': travelTimezonePlanner,
   'course-recon-checklist': courseReconPlanner,
   'recovery-planner': recoveryPlanner,
+  'altitude-acclimation-planner': altitudeAcclimationPlanner,
+  'trail-vertical-pacing': trailVerticalPacingPlanner,
 };
 
 export function runPlanner(slug: string, input: Record<string, PlannerValue>): PlannerOutput {

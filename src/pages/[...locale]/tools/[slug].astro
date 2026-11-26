@@ -91,6 +91,8 @@ const activeTool = [
   'race-travel-planner',
   'course-recon-checklist',
   'recovery-planner',
+  'altitude-acclimation-planner',
+  'trail-vertical-pacing',
 ].includes(entity.slug);
 const publishedRoutes = content.allEntities
   .filter((item) => item.kind === 'route' && item.status === 'published')
@@ -1183,7 +1185,7 @@ const structuredData = [
         {entity.slug === 'carb-load-planner' && <CarbLoadPlanner locale={locale} />}
         {entity.slug === 'sweat-rate' && <SweatRate locale={locale} />}
         {entity.slug === 'injury-risk-check' && <InjuryRiskCheck locale={locale} />}
-        {['cutoff-planner','crew-pacer-plan','race-day-timeline','race-qualifier-checker','result-split-analyzer','taper-planner','gear-weight-planner','heat-acclimation-planner','race-calendar-planner','race-travel-planner','course-recon-checklist','recovery-planner'].includes(entity.slug) && (
+        {['cutoff-planner','crew-pacer-plan','race-day-timeline','race-qualifier-checker','result-split-analyzer','taper-planner','gear-weight-planner','heat-acclimation-planner','race-calendar-planner','race-travel-planner','course-recon-checklist','recovery-planner','altitude-acclimation-planner','trail-vertical-pacing'].includes(entity.slug) && (
           <PlanTool locale={locale} slug={entity.slug} title={translation.title} details={details} />
         )}
 

@@ -24,6 +24,12 @@ const cases = [
   'case-course-recon-checklist-road-marathon',
   'case-course-recon-checklist-mountain-100',
   'case-course-recon-checklist-half-low',
+  'case-altitude-acclimation-2300',
+  'case-altitude-acclimation-3500',
+  'case-altitude-acclimation-4200',
+  'case-trail-vertical-50k',
+  'case-trail-vertical-half',
+  'case-trail-vertical-100k',
 ];
 
 for (const caseId of cases) {

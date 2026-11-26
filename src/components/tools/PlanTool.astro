@@ -61,7 +61,6 @@ function exampleFor(name: string, slug: string): string {
     waterLiters: '1.5',
     fuelGrams: '360',
     raceWbgtC: '26',
-    arrivalDaysBefore: '7',
     currentDailyHeatMinutes: '30',
     planDays: '14',
     sessionMinutes: '45',
@@ -76,6 +75,13 @@ function exampleFor(name: string, slug: string): string {
     qualitySessionsPerWeek: '2',
     daysToRace: '14',
     qualifyingTimeMinutes: '172',
+    raceAltitudeMeters: '2300',
+    raceDate: '2027-05-15',
+    arrivalDaysBefore: slug === 'altitude-acclimation-planner' ? '3' : '7',
+    currentAltitudeMeters: '0',
+    climbMeters: '2000',
+    descentMeters: '2000',
+    targetHours: '8',
   };
   return examples[name] ?? '';
 }
@@ -89,6 +95,7 @@ const SELECT_DEFAULTS: Record<string, Record<string, string>> = {
   'run-walk': { mode: 'cycles' },
   'track-convert': { targetFormat: 'gpx', outputFormat: 'gpx' },
   'result-split-analyzer': { splitKm: '5' },
+  'trail-vertical-pacing': { technicality: 'medium' },
 };
 function selectDefault(name: string, slug: string): string | undefined {
   return SELECT_DEFAULTS[slug]?.[name];

@@ -20,6 +20,7 @@ import SweatRate from '../../../components/tools/SweatRate.astro';
 import InjuryRiskCheck from '../../../components/tools/InjuryRiskCheck.astro';
 import PlanTool from '../../../components/tools/PlanTool.astro';
 import { siteContent } from '../../../lib/content';
+import { wrapContentTables } from '../../../lib/html';
 import {
   entityHref,
   formatDate,
@@ -86,6 +87,10 @@ const activeTool = [
   'taper-planner',
   'gear-weight-planner',
   'heat-acclimation-planner',
+  'race-calendar-planner',
+  'race-travel-planner',
+  'course-recon-checklist',
+  'recovery-planner',
 ].includes(entity.slug);
 const publishedRoutes = content.allEntities
   .filter((item) => item.kind === 'route' && item.status === 'published')
@@ -1178,7 +1183,7 @@ const structuredData = [
         {entity.slug === 'carb-load-planner' && <CarbLoadPlanner locale={locale} />}
         {entity.slug === 'sweat-rate' && <SweatRate locale={locale} />}
         {entity.slug === 'injury-risk-check' && <InjuryRiskCheck locale={locale} />}
-        {['cutoff-planner','crew-pacer-plan','race-day-timeline','race-qualifier-checker','result-split-analyzer','taper-planner','gear-weight-planner','heat-acclimation-planner'].includes(entity.slug) && (
+        {['cutoff-planner','crew-pacer-plan','race-day-timeline','race-qualifier-checker','result-split-analyzer','taper-planner','gear-weight-planner','heat-acclimation-planner','race-calendar-planner','race-travel-planner','course-recon-checklist','recovery-planner'].includes(entity.slug) && (
           <PlanTool locale={locale} slug={entity.slug} title={translation.title} details={details} />
         )}
 
@@ -1227,7 +1232,7 @@ const structuredData = [
 
     <div class="tool-narrative">
       <h2 class="tool-section-title">{copy.formulaTitle}</h2>
-      <div class="prose" set:html={translation.html} />
+      <div class="prose" set:html={wrapContentTables(translation.html)} />
 
       <details class="spec-box">
         <summary>{copy.specTitle}</summary>
@@ -2087,5 +2092,25 @@ const structuredData = [
       padding: 0;
       border: 0;
     }
+  }
+</style>
+
+<style is:global>
+  .prose .table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  input[type='file'],
+  .tool-calc input,
+  .tool-calc select,
+  .tool-calc textarea {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .prose code,
+  .prose pre {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 </style>

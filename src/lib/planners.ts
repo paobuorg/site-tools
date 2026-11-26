@@ -372,6 +372,215 @@ function heatAcclimation(input: Record<string, PlannerValue>): PlannerOutput {
   };
 }
 
+
+function isoDay(value: unknown, label: string): number {
+  const raw = String(value ?? '').trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) throw new PlannerError(`${label}: use YYYY-MM-DD.`);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const ms = Date.UTC(year, month - 1, day);
+  const parsed = new Date(ms);
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    throw new PlannerError(`${label}: use a real calendar date.`);
+  }
+  return ms;
+}
+
+function dayString(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+function addDays(ms: number, days: number): number {
+  return ms + days * 86400000;
+}
+
+function raceCalendarPlanner(input: Record<string, PlannerValue>): PlannerOutput {
+  const start = isoDay(input.today, 'Today');
+  const goal = isoDay(input.goalRaceDate, 'Goal race date');
+  if (goal <= start) throw new PlannerError('Goal race date must be after today.');
+  const distance = String(input.goalDistance ?? 'marathon');
+  const taperByDistance: Record<string, number> = {
+    '5k': 1, '10k': 1, half: 2, marathon: 3, ultra: 3,
+  };
+  const recoveryByDistance: Record<string, number> = {
+    '5k': 5, '10k': 7, half: 10, marathon: 14, ultra: 21,
+  };
+  if (!(distance in taperByDistance)) throw new PlannerError('Goal distance: choose 5k, 10k, half, marathon or ultra.');
+  const weekly = ranged(input.currentWeeklyKm, 'Current weekly km', 10, 300);
+  const totalWeeks = Math.floor((goal - start) / (7 * 86400000));
+  if (totalWeeks < 4) throw new PlannerError('At least 4 weeks between today and the goal race are required.');
+  const taperWeeks = taperByDistance[distance];
+  const recoveryDays = recoveryByDistance[distance];
+  const buildWeeks = Math.max(0, totalWeeks - taperWeeks);
+  const phases: Array<Record<string, unknown>> = [];
+  const baseWeeks = Math.max(1, Math.floor(buildWeeks * 0.5));
+  const peakWeeks = Math.max(1, buildWeeks - baseWeeks);
+  const taperStart = addDays(goal, -taperWeeks * 7);
+  let cursor = start;
+  phases.push({ phase: 'base', startDate: dayString(cursor), endDate: dayString(addDays(cursor, baseWeeks * 7 - 1)), weeks: baseWeeks, focus: 'aerobic' });
+  cursor = addDays(cursor, baseWeeks * 7);
+  phases.push({ phase: 'build', startDate: dayString(cursor), endDate: dayString(addDays(taperStart, -1)), weeks: peakWeeks, focus: 'threshold' });
+  phases.push({ phase: 'taper', startDate: dayString(taperStart), endDate: dayString(addDays(goal, -1)), weeks: taperWeeks, focus: 'sharpen' });
+  phases.push({ phase: 'race', startDate: dayString(goal), endDate: dayString(goal), weeks: 0, focus: 'execute' });
+  phases.push({ phase: 'recovery', startDate: dayString(addDays(goal, 1)), endDate: dayString(addDays(goal, recoveryDays)), weeks: Math.round(recoveryDays / 7), focus: 'recover' });
+  const nextRaw = String(input.nextRaceDate ?? '').trim();
+  let nextGapDays: number | null = null;
+  let nextVerdict = 'none';
+  if (nextRaw) {
+    const next = isoDay(nextRaw, 'Next race date');
+    if (next <= goal) throw new PlannerError('Next race date must be after the goal race.');
+    nextGapDays = Math.round((next - goal) / 86400000);
+    if (nextGapDays < recoveryDays + 7) nextVerdict = 'skip';
+    else if (nextGapDays < recoveryDays + 21) nextVerdict = 'training';
+    else nextVerdict = 'race';
+  }
+  const warnings: string[] = [];
+  if (weekly < 30 && distance === 'marathon') warnings.push('Current weekly volume is a low base for a marathon build.');
+  if (buildWeeks < 6) warnings.push('Build phase is under 6 weeks; treat the goal as a completion race, not a peak race.');
+  return {
+    totalWeeks,
+    buildWeeks,
+    taperWeeks,
+    recoveryDays,
+    phases,
+    nextGapDays,
+    nextVerdict,
+    warning: warnings.length ? warnings.join(' ') : null,
+  };
+}
+
+function travelTimezonePlanner(input: Record<string, PlannerValue>): PlannerOutput {
+  const home = ranged(input.homeUtcOffset, 'Home UTC offset', -12, 14);
+  const destination = ranged(input.destinationUtcOffset, 'Destination UTC offset', -12, 14);
+  const raceDate = isoDay(input.raceDate, 'Race date');
+  const arrival = isoDay(input.arrivalDate, 'Arrival date');
+  if (arrival > raceDate) throw new PlannerError('Arrival date must be on or before race date.');
+  const start = parseClock(input.raceStartLocal, 'Race start local');
+  const offset = destination - home;
+  const direction = offset > 0 ? 'east' : offset < 0 ? 'west' : 'none';
+  const adaptationPerDay = direction === 'east' ? 1 : direction === 'west' ? 1.5 : 0;
+  const neededDays = direction === 'none' ? 0 : Math.ceil(Math.abs(offset) / adaptationPerDay);
+  const recommendedArrival = addDays(raceDate, -(neededDays + 1));
+  const arrivalDaysBefore = Math.round((raceDate - arrival) / 86400000);
+  const homeClockMinutes = ((start - offset * 60) % 1440 + 1440) % 1440;
+  const dayShift = start - offset * 60 < 0 ? -1 : start - offset * 60 >= 1440 ? 1 : 0;
+  const readiness = arrivalDaysBefore >= neededDays + 1 ? 'ready' : arrivalDaysBefore >= neededDays ? 'short' : 'very-short';
+  const shiftPerDay = direction === 'none' ? 0 : Math.round((Math.abs(offset) / Math.max(1, neededDays)) * 10) / 10;
+  const plan: Array<Record<string, unknown>> = [];
+  const days = Math.min(7, Math.max(1, arrivalDaysBefore + 1));
+  for (let index = 0; index < days; index += 1) {
+    const date = addDays(arrival, index);
+    const step = direction === 'none' ? 0 : Math.min(Math.abs(offset), Math.round((index + 1) * shiftPerDay));
+    const bed = direction === 'east' ? 22 * 60 + 30 - step * 60 : 22 * 60 + 30 + step * 60;
+    const wake = direction === 'east' ? 6 * 60 + 30 - step * 60 : 6 * 60 + 30 + step * 60;
+    plan.push({
+      day: index + 1,
+      date: dayString(date),
+      sleepClock: clock(((bed % 1440) + 1440) % 1440),
+      wakeClock: clock(((wake % 1440) + 1440) % 1440),
+      note: direction === 'east' ? 'advance' : direction === 'west' ? 'delay' : 'hold',
+    });
+  }
+  return {
+    offsetHours: offset,
+    direction,
+    neededAdaptationDays: neededDays,
+    recommendedArrivalDate: dayString(recommendedArrival),
+    arrivalDaysBefore,
+    raceStartHomeClock: `${clock(homeClockMinutes)}${dayShift === -1 ? ' (-1d)' : dayShift === 1 ? ' (+1d)' : ''}`,
+    shiftPerDayHours: shiftPerDay,
+    readiness,
+    plan,
+  };
+}
+
+const COURSE_RECON_ITEMS: Array<{ code: string; category: string; priority: string }> = [
+  { code: 'official-rules', category: 'rules', priority: 'high' },
+  { code: 'mandatory-gear', category: 'rules', priority: 'high' },
+  { code: 'cutoffs', category: 'rules', priority: 'high' },
+  { code: 'course-map', category: 'course', priority: 'high' },
+  { code: 'elevation-profile', category: 'course', priority: 'high' },
+  { code: 'aid-stations', category: 'aid', priority: 'high' },
+  { code: 'water-plan', category: 'aid', priority: 'high' },
+  { code: 'load-gpx', category: 'nav', priority: 'high' },
+  { code: 'waypoints', category: 'nav', priority: 'high' },
+  { code: 'offline-map', category: 'nav', priority: 'high' },
+  { code: 'escape-routes', category: 'bailout', priority: 'high' },
+  { code: 'historical-weather', category: 'weather', priority: 'medium' },
+  { code: 'pace-card', category: 'race', priority: 'medium' },
+];
+
+function courseReconPlanner(input: Record<string, PlannerValue>): PlannerOutput {
+  const distance = ranged(input.distanceKm, 'Distance', 1, 500);
+  const gain = ranged(input.elevationGainMeters, 'Elevation gain', 0, 30000);
+  const hours = ranged(input.raceHours, 'Race hours', 1, 60);
+  const tech = String(input.technicality ?? 'medium');
+  if (!['low', 'medium', 'high'].includes(tech)) throw new PlannerError('Technicality: choose low, medium or high.');
+  const night = input.nightSection === true || input.nightSection === 'true';
+  const crew = input.crewAccess === true || input.crewAccess === 'true';
+  const gpx = input.gpxAvailable === true || input.gpxAvailable === 'true';
+  const items = [...COURSE_RECON_ITEMS];
+  if (tech !== 'low') items.push({ code: 'surface-notes', category: 'course', priority: 'high' });
+  if (tech === 'high') items.push({ code: 'recon-run', category: 'course', priority: 'high' });
+  if (night) items.push({ code: 'sunrise-sunset', category: 'weather', priority: 'high' }, { code: 'night-kit', category: 'gear', priority: 'high' });
+  if (crew) items.push({ code: 'crew-access', category: 'crew', priority: 'high' }, { code: 'pacer-points', category: 'crew', priority: 'high' }, { code: 'drop-bags', category: 'aid', priority: 'medium' });
+  if (!gpx) items.push({ code: 'paper-map', category: 'nav', priority: 'high' });
+  if (gain / Math.max(1, distance) > 30) items.push({ code: 'poles', category: 'gear', priority: 'medium' });
+  const desktopMinutes = Math.round(45 + distance * 0.5 + gain * 0.02 + (tech === 'high' ? 30 : tech === 'medium' ? 15 : 0) + (night ? 20 : 0) + (crew ? 15 : 0));
+  const riskBand = night || tech === 'high' || hours >= 12 ? 'high' : tech === 'medium' || hours >= 6 ? 'moderate' : 'low';
+  return {
+    totalItems: items.length,
+    highPriorityItems: items.filter((item) => item.priority === 'high').length,
+    desktopMinutes,
+    reconRuns: tech === 'high' ? 3 : tech === 'medium' ? 2 : 1,
+    riskBand,
+    checklist: items.map(({ code, category, priority }) => ({ category, item: code, priority })),
+  };
+}
+
+function recoveryPlanner(input: Record<string, PlannerValue>): PlannerOutput {
+  const race = isoDay(input.raceDate, 'Race date');
+  const distance = String(input.raceDistance ?? 'marathon');
+  const baseDays: Record<string, number> = {
+    '5k': 7, '10k': 7, half: 10, marathon: 14, '50k': 21, '100k': 28, '100mi': 42,
+  };
+  if (!(distance in baseDays)) throw new PlannerError('Race distance: choose 5k, 10k, half, marathon, 50k, 100k or 100mi.');
+  const age = ranged(input.age ?? 35, 'Age', 18, 80);
+  const strength = input.strengthTraining === true || input.strengthTraining === 'true';
+  const ageExtra = age >= 60 ? 7 : age >= 50 ? 4 : age >= 40 ? 2 : 0;
+  const recoveryDays = baseDays[distance] + ageExtra;
+  const walkRunDay = Math.max(3, Math.ceil(recoveryDays * 0.35));
+  const continuousDay = Math.max(walkRunDay + 2, Math.ceil(recoveryDays * 0.6));
+  const qualityDay = recoveryDays;
+  const readyDay = recoveryDays + 7;
+  const strengthDay = strength ? walkRunDay : continuousDay;
+  const phases = [
+    { phase: 'walk', startDate: dayString(addDays(race, 1)), endDate: dayString(addDays(race, walkRunDay - 1)), weeks: 0, focus: 'circulation' },
+    { phase: 'walk-run', startDate: dayString(addDays(race, walkRunDay)), endDate: dayString(addDays(race, continuousDay - 1)), weeks: 0, focus: 'aerobic' },
+    { phase: 'easy-run', startDate: dayString(addDays(race, continuousDay)), endDate: dayString(addDays(race, qualityDay - 1)), weeks: 0, focus: 'frequency' },
+    { phase: 'build', startDate: dayString(addDays(race, qualityDay)), endDate: dayString(addDays(race, readyDay)), weeks: 1, focus: 'threshold' },
+  ];
+  const warnings: string[] = [];
+  if (age >= 50) warnings.push('Age adjustment extends the walk and walk-run phases; use pain and sleep, not the calendar.');
+  if (distance === '100mi' || distance === '100k') warnings.push('For 100 km or 100 miles, add 1–2 weeks before any quality session.');
+  return {
+    recoveryDays,
+    walkRunStartDate: dayString(addDays(race, walkRunDay)),
+    continuousRunDate: dayString(addDays(race, continuousDay)),
+    qualityStartDate: dayString(addDays(race, qualityDay)),
+    raceReadyDate: dayString(addDays(race, readyDay)),
+    strengthStartDate: dayString(addDays(race, strengthDay)),
+    phases,
+    warning: warnings.length ? warnings.join(' ') : null,
+  };
+}
+
 const calculators: Record<string, (input: Record<string, PlannerValue>) => PlannerOutput> = {
   'cutoff-planner': cutoffPlanner,
   'crew-pacer-plan': crewPacerPlan,
@@ -381,6 +590,10 @@ const calculators: Record<string, (input: Record<string, PlannerValue>) => Plann
   'taper-planner': taperPlanner,
   'gear-weight-planner': gearWeight,
   'heat-acclimation-planner': heatAcclimation,
+  'race-calendar-planner': raceCalendarPlanner,
+  'race-travel-planner': travelTimezonePlanner,
+  'course-recon-checklist': courseReconPlanner,
+  'recovery-planner': recoveryPlanner,
 };
 
 export function runPlanner(slug: string, input: Record<string, PlannerValue>): PlannerOutput {

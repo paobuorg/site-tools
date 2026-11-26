@@ -151,7 +151,7 @@ const fieldSpecs = details.inputs.map((port) => ({ name: port.name, type: port.t
     <button class="button primary" type="submit"><Icon name="spark" size={17} />{copy.submit}</button>
   </form>
   <p class="field-error" data-plan-error hidden></p>
-  <div class="plan-result" data-plan-result hidden>
+  <div class="plan-result" data-plan-result aria-live="polite" hidden>
     <h3>{copy.result}</h3>
     <dl class="plan-output" data-plan-output></dl>
     <p class="plan-note" data-plan-note></p>
@@ -188,4 +188,16 @@ const fieldSpecs = details.inputs.map((port) => ({ name: port.name, type: port.t
   .plan-tool .plan-table td { font-variant-numeric: tabular-nums; }
   .plan-tool .plan-list { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; font-weight: 500; }
   @media (max-width: 620px) { .plan-tool .plan-output > div { grid-template-columns: 1fr; } }
+  @media (max-width: 620px) {
+    .plan-tool .plan-table-wrap { overflow: visible; }
+    .plan-tool .plan-table { display: block; width: 100%; border-collapse: separate; border-spacing: 0; }
+    .plan-tool .plan-table thead { display: none; }
+    .plan-tool .plan-table tbody, .plan-tool .plan-table tr { display: block; width: 100%; }
+    .plan-tool .plan-table tr { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft, rgba(8,184,157,.06)); }
+    .plan-tool .plan-table th, .plan-tool .plan-table td { display: grid; grid-template-columns: minmax(92px, .55fr) minmax(0, 1.45fr); gap: 10px; width: 100%; padding: 4px 0; border: 0; white-space: normal; text-align: left; }
+    .plan-tool .plan-table td::before { content: attr(data-label); color: var(--muted); font-size: .8rem; font-weight: 600; }
+    .plan-tool .plan-table th[scope="row"] { color: var(--muted); font-size: .8rem; }
+    .plan-tool .plan-table th[scope="row"] + td::before { content: none; }
+    .plan-tool .plan-table th[scope="row"] + td { grid-template-columns: minmax(0, 1fr); }
+  }
 </style>

@@ -1,0 +1,191 @@
+---
+import type { Locale } from '@paobu/core/lib/i18n';
+import type { ToolDetails, ToolPort } from '@paobu/core/content';
+import Icon from '@paobu/core/components/Icon.astro';
+
+interface Props {
+  locale: Locale;
+  slug: string;
+  title: string;
+  details: ToolDetails;
+}
+const { locale, slug, title, details } = Astro.props;
+const copy = locale === 'zh-CN'
+  ? {
+      intro: '按页面里的公式与边界做一次可复算的检查。所有计算都在本地完成，不上传输入。',
+      submit: '计算',
+      result: '结果',
+      invalid: '请检查输入。',
+      note: '结果只用于规划与复核；赛事规则、医疗判断与教练意见优先。',
+      arrays: {
+        checkpoints: '每行一个计时点：公里,关门时刻（例：21,10:00）',
+        accessPoints: '每行一个支援点：公里,名称,crew,pacer（例：30.3,Robinson Flat,true,false）',
+        splits: '每行一个累计分段：公里,累计分钟（例：10,30）',
+        items: '每行一件装备：名称,克重（例：头灯,95）',
+      } as Record<string, string>,
+    }
+  : {
+      intro: 'Run a reproducible check against the formula and boundaries on this page. All calculation happens locally; inputs are not uploaded.',
+      submit: 'Calculate',
+      result: 'Result',
+      invalid: 'Check the inputs.',
+      note: 'Results are for planning and review; race rules, medical judgement and a coach take precedence.',
+      arrays: {
+        checkpoints: 'One checkpoint per line: km,cutoff (e.g. 21,10:00)',
+        accessPoints: 'One access point per line: km,name,crew,pacer (e.g. 30.3,Robinson Flat,true,false)',
+        splits: 'One cumulative split per line: km,elapsed minutes (e.g. 10,30)',
+        items: 'One item per line: name,grams (e.g. headlamp,95)',
+      } as Record<string, string>,
+    };
+
+function labelFor(port: ToolPort): string {
+  return port.labels?.[locale] ?? port.name;
+}
+
+function exampleFor(name: string, slug: string): string {
+  const examples: Record<string, string> = {
+    checkpoints: '21,10:00\n32,11:00',
+    accessPoints: '24.4,Duncan Canyon,true,false\n55.7,Michigan Bluff,true,true\n78,Rucky Chucky,true,true',
+    splits: '10,30\n20,60\n30,92\n40,124',
+    mandatoryItems: '防水冲锋衣,280\n头灯,95\n保温毯,120',
+    optionalItems: '能量胶四个,240\n遮阳帽,45',
+    distanceKm: slug === 'crew-pacer-plan' ? '100' : '42',
+    startClock: '08:00',
+    targetFinish: slug === 'crew-pacer-plan' ? '22:00' : '11:30',
+    finishCutoff: '12:00',
+    targetFinishMinutes: '120',
+    peakWeeklyKm: '70',
+    peakLongRunKm: '30',
+    bodyWeightKg: '62',
+    packWeightGrams: '450',
+    waterLiters: '1.5',
+    fuelGrams: '360',
+    raceWbgtC: '26',
+    arrivalDaysBefore: '7',
+    currentDailyHeatMinutes: '30',
+    planDays: '14',
+    sessionMinutes: '45',
+    waveOffsetMinutes: '10',
+    travelMinutes: '30',
+    checkinMinutes: '15',
+    bagDropMinutes: '10',
+    warmupMinutes: '10',
+    finishTargetHours: '3.5',
+    ageOnRaceDay: '32',
+    crewLeadMinutes: '20',
+    qualitySessionsPerWeek: '2',
+    daysToRace: '14',
+    qualifyingTimeMinutes: '172',
+  };
+  return examples[name] ?? '';
+}
+
+const SELECT_DEFAULTS: Record<string, Record<string, string>> = {
+  'race-qualifier-checker': { event: 'boston', sex: 'M' },
+  'taper-planner': { raceDistance: 'marathon', taperWeeks: '3' },
+  'splits': { distanceUnit: 'km', strategy: 'even' },
+  'pace': { mode: 'distance-time', distanceUnit: 'km' },
+  'race-checklist': { raceType: 'trail', duration: '3-6h', weather: 'mild' },
+  'run-walk': { mode: 'cycles' },
+  'track-convert': { targetFormat: 'gpx', outputFormat: 'gpx' },
+  'result-split-analyzer': { splitKm: '5' },
+};
+function selectDefault(name: string, slug: string): string | undefined {
+  return SELECT_DEFAULTS[slug]?.[name];
+}
+const outputLabels = Object.fromEntries(details.outputs.map((port) => [port.name, labelFor(port)]));
+const outputMeta = Object.fromEntries(details.outputs.map((port) => [port.name, { type: port.type, unit: port.unit ?? null, enumValues: port.enumValues ?? [] }]));
+const fieldSpecs = details.inputs.map((port) => ({ name: port.name, type: port.type, required: port.required }));
+---
+
+<div
+  class="plan-tool"
+  data-plan-tool
+  data-slug={slug}
+  data-locale={locale}
+  data-fields={JSON.stringify(fieldSpecs)}
+  data-labels={JSON.stringify(Object.fromEntries(details.inputs.map((port) => [port.name, labelFor(port)])))}
+  data-outputs={JSON.stringify(outputLabels)}
+  data-output-meta={JSON.stringify(outputMeta)}
+>
+  <h2>{title}</h2>
+  <p class="plan-intro">{copy.intro}</p>
+  <form class="plan-form" data-plan-form novalidate>
+    {details.inputs.map((port) => (
+      <div class="field">
+        <label for={`plan-${port.name}`}>{labelFor(port)}{port.required ? '' : ` (${locale === 'zh-CN' ? '可选' : 'optional'})`}</label>
+        {port.type === 'enum' ? (
+          <select id={`plan-${port.name}`} name={port.name}>
+            {(port.enumValues ?? []).map((value) => (
+              <option value={value} selected={value === selectDefault(port.name, slug)}>{value}</option>
+            ))}
+          </select>
+        ) : port.type === 'boolean' ? (
+          <input id={`plan-${port.name}`} name={port.name} type="checkbox" checked={port.name === 'qualifierCourseCertified'} />
+        ) : port.type === 'array' ? (
+          <textarea id={`plan-${port.name}`} name={port.name} rows="4" placeholder={exampleFor(port.name, slug)}>{exampleFor(port.name, slug)}</textarea>
+        ) : (
+          <input
+            id={`plan-${port.name}`}
+            name={port.name}
+            type={port.type === 'number' ? 'number' : 'text'}
+            value={exampleFor(port.name, slug)}
+            min={port.minimum}
+            max={port.maximum}
+            step={port.type === 'number' ? 'any' : undefined}
+            inputmode={port.type === 'number' ? 'decimal' : undefined}
+          />
+        )}
+        {port.type === 'array' && <p class="field-hint">{copy.arrays[port.name] ?? ''}</p>}
+        {(port.minimum !== undefined || port.maximum !== undefined) && (
+          <p class="field-hint">
+            {port.minimum !== undefined && port.maximum !== undefined
+              ? `${port.minimum} – ${port.maximum}`
+              : port.minimum !== undefined
+                ? `${locale === 'zh-CN' ? '不少于' : 'at least'} ${port.minimum}`
+                : `${locale === 'zh-CN' ? '不超过' : 'at most'} ${port.maximum}`} {port.unit ?? ''}
+          </p>
+        )}
+      </div>
+    ))}
+    <button class="button primary" type="submit"><Icon name="spark" size={17} />{copy.submit}</button>
+  </form>
+  <p class="field-error" data-plan-error hidden></p>
+  <div class="plan-result" data-plan-result hidden>
+    <h3>{copy.result}</h3>
+    <dl class="plan-output" data-plan-output></dl>
+    <p class="plan-note" data-plan-note></p>
+  </div>
+  <p class="plan-disclaimer">{copy.note}</p>
+</div>
+
+<style>
+  .plan-tool { display: grid; gap: 18px; }
+  .plan-tool h2 { margin: 0; font-size: 1.25rem; }
+  .plan-intro { margin: 0; color: var(--muted); line-height: 1.65; }
+  .plan-form { display: grid; gap: 16px; max-width: 560px; }
+  .plan-form .field { display: grid; gap: 6px; }
+  .plan-form label { font-weight: 700; }
+  .plan-form input, .plan-form select, .plan-form textarea { width: 100%; }
+  .plan-form textarea { font-family: var(--font-mono, ui-monospace, monospace); font-size: .9rem; }
+  .field-hint { margin: 0; color: var(--muted); font-size: .83rem; }
+  .field-error { margin: 0; color: #b42318; font-size: .88rem; }
+  .plan-result { border-top: 1px solid var(--border); padding-top: 18px; display: grid; gap: 12px; }
+  .plan-result h3 { margin: 0; font-size: 1.05rem; }
+  .plan-output { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 0; }
+  .plan-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #fff7e6; color: #7a4b00; line-height: 1.55; }
+  .plan-disclaimer { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+</style>
+
+<style is:global>
+  .plan-tool .plan-output > div { display: grid; grid-template-columns: minmax(140px, .8fr) minmax(0, 1.2fr); gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface-soft, rgba(8,184,157,.06)); }
+  .plan-tool .plan-output dt { color: var(--muted); font-size: .86rem; }
+  .plan-tool .plan-output dd { margin: 0; font-weight: 650; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .plan-tool .plan-table-wrap { max-width: 100%; overflow-x: auto; }
+  .plan-tool .plan-table { border-collapse: collapse; width: 100%; font-size: .84rem; font-weight: 500; }
+  .plan-tool .plan-table th, .plan-tool .plan-table td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; white-space: nowrap; }
+  .plan-tool .plan-table th { color: var(--muted); font-weight: 650; }
+  .plan-tool .plan-table td { font-variant-numeric: tabular-nums; }
+  .plan-tool .plan-list { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; font-weight: 500; }
+  @media (max-width: 620px) { .plan-tool .plan-output > div { grid-template-columns: 1fr; } }
+</style>

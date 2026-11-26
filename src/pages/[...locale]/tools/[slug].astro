@@ -18,6 +18,7 @@ import GradeAdjustedPace from '../../../components/tools/GradeAdjustedPace.astro
 import CarbLoadPlanner from '../../../components/tools/CarbLoadPlanner.astro';
 import SweatRate from '../../../components/tools/SweatRate.astro';
 import InjuryRiskCheck from '../../../components/tools/InjuryRiskCheck.astro';
+import PlanTool from '../../../components/tools/PlanTool.astro';
 import { siteContent } from '../../../lib/content';
 import {
   entityHref,
@@ -26,6 +27,7 @@ import {
   toolHref,
   toolIcon,
 } from '../../../lib/view';
+import { TOOL_COLLECTIONS } from '../../../lib/collections';
 
 export function getStaticPaths() {
   const content = siteContent();
@@ -47,6 +49,7 @@ const details = toolDetails(entity);
 const sources = content.sourcesFor(entity);
 const sourceNotes = sources.map((source) => describeSourceVerification(source, locale));
 const related = content.related(entity, locale);
+const memberships = TOOL_COLLECTIONS.filter((item) => item.tools.includes(entity.slug));
 const cases = content.cases.filter((item) => item.toolId === entity.entityId);
 const authors = [
   ...new Set(
@@ -75,6 +78,14 @@ const activeTool = [
   'carb-load-planner',
   'sweat-rate',
   'injury-risk-check',
+  'cutoff-planner',
+  'crew-pacer-plan',
+  'race-day-timeline',
+  'race-qualifier-checker',
+  'result-split-analyzer',
+  'taper-planner',
+  'gear-weight-planner',
+  'heat-acclimation-planner',
 ].includes(entity.slug);
 const publishedRoutes = content.allEntities
   .filter((item) => item.kind === 'route' && item.status === 'published')
@@ -579,6 +590,15 @@ const structuredData = [
         </div>
         <h1>{translation.title}</h1>
         <p>{translation.summary}</p>
+        {memberships.length > 0 && (
+          <div class="tool-collection-links">
+            {memberships.map((item) => (
+              <a class="pill" href={`${prefix}/collections/${item.slug}/`}>
+                <Icon name={item.icon} size={13} />{item[locale === 'zh-CN' ? 'zh' : 'en'].title}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </header>
 
@@ -1158,6 +1178,9 @@ const structuredData = [
         {entity.slug === 'carb-load-planner' && <CarbLoadPlanner locale={locale} />}
         {entity.slug === 'sweat-rate' && <SweatRate locale={locale} />}
         {entity.slug === 'injury-risk-check' && <InjuryRiskCheck locale={locale} />}
+        {['cutoff-planner','crew-pacer-plan','race-day-timeline','race-qualifier-checker','result-split-analyzer','taper-planner','gear-weight-planner','heat-acclimation-planner'].includes(entity.slug) && (
+          <PlanTool locale={locale} slug={entity.slug} title={translation.title} details={details} />
+        )}
 
         {!activeTool && (
           <div class="empty-state">
@@ -1293,6 +1316,8 @@ const structuredData = [
 </script>
 
 <style>
+  .tool-collection-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+  .tool-collection-links a { text-decoration: none; }
   .tool-header {
     display: flex;
     align-items: flex-start;

@@ -16,17 +16,19 @@ const locale = Astro.props.locale as Locale;
 const prefix = localePrefix(locale);
 const content = siteContent();
 const tools = content.visible('tool').sort((a, b) => a.slug.localeCompare(b.slug));
-const paceTools = tools.filter((entity) => ['pace', 'splits', 'run-walk', 'race-predict'].includes(entity.slug));
-const trackTools = tools.filter((entity) => ['track-view', 'track-convert', 'track-simplify', 'route-compare', 'route-elevation'].includes(entity.slug));
-const planTools = tools.filter((entity) => ['fueling-planner', 'shoe-mileage', 'race-checklist'].includes(entity.slug));
+const paceTools = tools.filter((entity) => ['pace', 'splits', 'grade-adjusted-pace', 'heat-adjust', 'race-predict', 'run-walk', 'result-split-analyzer'].includes(entity.slug));
+const trackTools = tools.filter((entity) => ['track-view', 'track-convert', 'track-simplify', 'route-compare', 'route-elevation', 'training-load'].includes(entity.slug));
+const planTools = tools.filter((entity) => ['cutoff-planner', 'crew-pacer-plan', 'race-day-timeline', 'race-qualifier-checker', 'race-checklist', 'taper-planner', 'fueling-planner', 'carb-load-planner', 'sweat-rate', 'gear-weight-planner', 'heat-acclimation-planner', 'shoe-mileage', 'injury-risk-check'].includes(entity.slug));
 const copy = locale === 'zh-CN'
   ? {
       title: '跑步工具',
       subtitle: '算清楚，再出发',
       intro: '配速、分段和轨迹计算都在浏览器本地完成。公式、舍入和独立算例随每个工具公开。',
       searchPlaceholder: '搜索配速、分段或轨迹工具',
-      paceTitle: '配速与分段',
-      trackTitle: '轨迹文件',
+      paceTitle: '配速与成绩',
+      collections: '按使用顺序浏览',
+      collectionsHint: '比赛规划、配速、补给装备、路线与负荷，四组集合页把 26 个工具串成路径。',
+      trackTitle: '路线与负荷',
       planTitle: '补给、装备与赛前',
       trackHint: '文件只在当前浏览器内读取，不上传；处理在 Worker 中执行。',
       open: '打开工具',
@@ -43,8 +45,10 @@ const copy = locale === 'zh-CN'
       subtitle: 'Do the math, then head out',
       intro: 'Pace, split and track calculations run locally in the browser. Every tool publishes its formula, rounding and independent examples.',
       searchPlaceholder: 'Search pace, split or track tools',
-      paceTitle: 'Pace and splits',
-      trackTitle: 'Track files',
+      paceTitle: 'Pace and results',
+      collections: 'Browse by order of use',
+      collectionsHint: 'Race planning, pace, fuel and gear, routes and load: four collections link all 26 tools into paths.',
+      trackTitle: 'Routes and load',
       planTitle: 'Fuel, gear and race day',
       trackHint: 'Files are read in this browser only and are never uploaded; processing runs in a Worker.',
       open: 'Open tool',
@@ -84,6 +88,14 @@ const copy = locale === 'zh-CN'
         />
       </div>
     </section>
+
+    <div class="collection-strip">
+      <div>
+        <h2>{copy.collections}</h2>
+        <p class="field-hint">{copy.collectionsHint}</p>
+      </div>
+      <a class="button small" href={`${prefix}/collections/`}>{copy.collections} →</a>
+    </div>
 
     <div class="trust-strip">
       <span class="pill lavender"><Icon name="shield" size={13} />{copy.local}</span>
@@ -180,6 +192,9 @@ const copy = locale === 'zh-CN'
 </BaseLayout>
 
 <style>
+  .collection-strip { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 24px; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface-2); }
+  .collection-strip h2 { margin: 0 0 4px; font-size: 1.05rem; }
+  .collection-strip .field-hint { margin: 0; }
   .tools-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "local-snapshot",
-  "primaryRepository": "running-handbook",
+  "primaryRepository": "marathon-trail-running-races",
   "digestAlgorithm": "sha256-tree-v1",
   "digestScope": [
     {
@@ -24,20 +24,20 @@
       ]
     }
   ],
-  "generatedAt": "2026-11-25T07:19:36.053Z",
+  "generatedAt": "2026-11-26T02:18:32.541Z",
   "repositories": [
     {
       "name": "marathon-trail-running-races",
-      "commit": "7cc63ab7fb7ab087311a80257a0d3c6af9caf514",
-      "digest": "ff881b3bb337dab5ddaa3115671097a40fd1e86865e28fe975ae770f0bed4f70",
-      "fileCount": 973
+      "commit": "a6315d612ee02a837a0ae0ded14d92e063edf292",
+      "digest": "55b57420f0365914fb2f38e83233476ea0d67880f5917823fc11e549f27fce52",
+      "fileCount": 1192
     },
     {
       "name": "running-handbook",
-      "commit": "517330fe2d97e3eaa3d44504d457f739a5334fe5",
-      "digest": "1f67aab799dc2fc62685c76f5090daf34b6cb089c90610637f04b126bf194f8e",
-      "fileCount": 832
+      "commit": "28bb946121b6ca4be8d48f8dca3f7c3011c4d3cb",
+      "digest": "44f07ba81c2bd9c21f554373d1729d6bc760117aa98659d1b5a7c439c63f8de3",
+      "fileCount": 1102
     }
   ],
-  "note": "Local source-tree lock for reproducible local builds. The commit pins the content revision used for the build; README-only commits do not change this content tree. running-handbook is locked as one repository with separate knowledge and tools trees."
+  "note": "Local source-tree lock for reproducible local builds. Digests cover every regular file under the declared trees, sorted by repository-relative path and hashed as sha256(path NUL sha256(file) LF); the commit pins the revision used for the build."
 }

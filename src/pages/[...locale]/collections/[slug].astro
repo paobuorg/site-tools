@@ -1,0 +1,53 @@
+---
+import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Icon from '@paobu/core/components/Icon.astro';
+import { type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
+import { siteContent } from '../../../lib/content';
+import { toolDetails, toolHref, toolIcon } from '../../../lib/view';
+import { TOOL_COLLECTIONS, toolCollection } from '../../../lib/collections';
+
+export function getStaticPaths() {
+  return LOCALES.flatMap((locale) => TOOL_COLLECTIONS.map((collection) => ({
+    params: { locale: localeStaticParam(locale), slug: collection.slug },
+    props: { locale, collectionSlug: collection.slug },
+  })));
+}
+const locale = Astro.props.locale as Locale;
+const prefix = localePrefix(locale);
+const content = siteContent();
+const collection = toolCollection(Astro.props.collectionSlug);
+if (!collection) throw new Error(`Unknown tool collection ${Astro.props.collectionSlug}`);
+const text = collection[locale === 'zh-CN' ? 'zh' : 'en'];
+const tools = collection.tools.map((slug) => content.visible('tool').find((entity) => entity.slug === slug)).filter(Boolean);
+const others = TOOL_COLLECTIONS.filter((item) => item.slug !== collection.slug).slice(0, 3);
+const copy = locale === 'zh-CN'
+  ? { home: '首页', all: '全部工具', collections: '工具集合', notes: '用这一组时先记住', others: '换一个集合', open: '打开工具' }
+  : { home: 'Home', all: 'All tools', collections: 'Collections', notes: 'Keep in mind', others: 'Try another collection', open: 'Open tool' };
+---
+<BaseLayout locale={locale} title={`${text.title} · RUNUP`} description={text.summary} active="tools" preview={content.preview} footerAd>
+  <div class="page-shell">
+    <div class="breadcrumbs"><ol><li><a href={`${prefix}/`}>{copy.home}</a></li><li><a href={`${prefix}/`}>{copy.all}</a></li><li><a href={`${prefix}/collections/`}>{copy.collections}</a></li><li>{text.title}</li></ol></div>
+    <div class="page-intro"><div><span class="pill mint"><Icon name={collection.icon} size={14} />{tools.length}</span><h1>{text.title}</h1><p>{text.intro}</p></div></div>
+    <section class="collection-notes"><h2>{copy.notes}</h2><ul>{text.notes.map((note) => <li>{note}</li>)}</ul></section>
+    <div class="tool-grid">
+      {tools.map((entity) => {
+        const translation = content.translation(entity!, locale);
+        const details = toolDetails(entity!);
+        return (
+          <a class="card tool-card" href={toolHref(entity!, locale)}>
+            <span class="tool-card-icon tone-mint" aria-hidden="true"><Icon name={toolIcon(entity!.slug)} size={27} /></span>
+            <span class="tool-card-body"><span class="pill">{details.specVersion}</span><h3>{translation.title}</h3><p>{translation.summary}</p><span class="tool-card-action">{copy.open} <Icon name="arrow-right" size={15} /></span></span>
+          </a>
+        );
+      })}
+    </div>
+    <section class="collection-others"><h2>{copy.others}</h2><div class="related-row">{others.map((item) => <a class="related-link" href={`${prefix}/collections/${item.slug}/`}><span>{item[locale === 'zh-CN' ? 'zh' : 'en'].title}</span><Icon name="arrow-right" size={17} /></a>)}</div></section>
+  </div>
+</BaseLayout>
+<style>
+  .collection-notes { margin: 0 0 28px; padding: 22px 24px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface-2); }
+  .collection-notes h2 { margin: 0 0 10px; font-size: 1.1rem; }
+  .collection-notes ul { margin: 0; padding-left: 20px; color: var(--muted-strong); line-height: 1.8; }
+  .collection-others { margin-top: 36px; }
+</style>

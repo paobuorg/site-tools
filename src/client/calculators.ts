@@ -25,6 +25,7 @@ import { initGradeAdjustedPace } from './grade-adjusted-pace';
 import { initCarbLoadPlanner } from './carb-load-planner';
 import { initSweatRate } from './sweat-rate';
 import { initInjuryRiskCheck } from './injury-risk-check';
+import { initPlanTool } from './planners';
 
 type Locale = 'zh-CN' | 'en';
 type PaceMode = 'distance-time' | 'distance-pace' | 'time-pace';
@@ -1382,4 +1383,6 @@ export function initCalculators() {
   if (sweatRate) initSweatRate(sweatRate);
   const injuryRisk = document.querySelector<HTMLElement>('[data-injury-risk]');
   if (injuryRisk) initInjuryRiskCheck(injuryRisk);
+  const planTool = document.querySelector<HTMLElement>('[data-plan-tool]');
+  if (planTool) initPlanTool(planTool);
 }

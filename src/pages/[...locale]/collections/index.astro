@@ -1,0 +1,37 @@
+---
+import BaseLayout from '@paobu/core/layouts/BaseLayout.astro';
+import Icon from '@paobu/core/components/Icon.astro';
+import { type Locale, LOCALES } from '@paobu/core/lib/i18n';
+import { localePrefix, localeStaticParam } from '@paobu/core/lib/routing';
+import { siteContent } from '../../../lib/content';
+import { TOOL_COLLECTIONS } from '../../../lib/collections';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale: localeStaticParam(locale) }, props: { locale } }));
+}
+const locale = Astro.props.locale as Locale;
+const prefix = localePrefix(locale);
+const content = siteContent();
+const copy = locale === 'zh-CN'
+  ? { home: '首页', title: '工具集合', intro: '按使用顺序分组：先确认条件，再算配速，再排补给，最后读轨迹与负荷。集合页只做导航，不复制工具说明。', tools: '个工具', open: '打开集合' }
+  : { home: 'Home', title: 'Tool collections', intro: 'Grouped by order of use: confirm conditions, calculate pace, plan fuel, then read tracks and load. Collection pages navigate; they do not duplicate tool pages.', tools: 'tools', open: 'Open collection' };
+---
+<BaseLayout locale={locale} title={`${copy.title} · RUNUP`} description={copy.intro} active="tools" preview={content.preview} footerAd>
+  <div class="page-shell">
+    <div class="breadcrumbs"><ol><li><a href={`${prefix}/`}>{copy.home}</a></li><li>{copy.title}</li></ol></div>
+    <div class="page-intro"><div><span class="pill mint"><Icon name="tools" size={14} />{TOOL_COLLECTIONS.length}</span><h1>{copy.title}</h1><p>{copy.intro}</p></div></div>
+    <div class="grid two">
+      {TOOL_COLLECTIONS.map((collection) => {
+        const text = collection[locale === 'zh-CN' ? 'zh' : 'en'];
+        return (
+          <a class="card collection-card" href={`${prefix}/collections/${collection.slug}/`}>
+            <span class="pill"><Icon name={collection.icon} size={14} />{collection.tools.length} {copy.tools}</span>
+            <h2>{text.title}</h2>
+            <p>{text.summary}</p>
+            <span class="collection-open">{copy.open} <Icon name="arrow-right" size={16} /></span>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</BaseLayout>
